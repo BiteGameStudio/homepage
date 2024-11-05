@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Asteroids Game with Enemy Ships</title>
+    <title>Asteroids Game with Enemy Ships and Sound</title>
     <style>
         /* Importing Google Fonts - Press Start 2P for a retro 80s vibe */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -74,28 +74,28 @@
 
     <!-- Include audio elements -->
     <audio id="ambientSound" loop>
-        <source src="/s/ambient.mp3" type="audio/mpeg">
+        <source src="../../public/s/ambient.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
     <audio id="laserSound">
-        <source src="/s/laser.mp3" type="audio/mpeg">
+        <source src="../../public/s/laser.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
     <audio id="explosionSound">
-        <source src="/s/explosion.mp3" type="audio/mpeg">
+        <source src="../../public/s/explosion.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
     <audio id="shipExplosionSound">
-        <source src="/s/ship_explosion.mp3" type="audio/mpeg">
+        <source src="../../public/s/ship_explosion.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
-    <audio id="shipBridgeSound">
-        <source src="/s/bridge.mp3" type="audio/mpeg">
+    <audio id="shipBridgeSound" loop>
+        <source src="../../public/s/bridge.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
     <!-- Optional: Enemy ship shooting sound -->
     <audio id="enemyLaserSound">
-        <source src="/s/enemy_laser.mp3" type="audio/mpeg">
+        <source src="../../public/s/enemy-laser.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
 </div>
@@ -135,7 +135,10 @@
     let inStoryMode = true;
     let currentStoryPage = 0;
     let shipDestroyed = false;
-    const enemyShipStartRound = 1; // Configure the round to start enemy ships
+    const blobStartRound = 6; // Configure the round to start enemy ships
+    const enemyShipStartRound = 3; // Configure the round to start enemy ships
+    const enemyBaseStartRound = 4; // Configure the round to start enemy ships
+    const maxEnemyShips = 5; // Maximum number of enemy ships allowed
 
     // Story arrays
     const stories = [
@@ -167,111 +170,110 @@
         ],
         // Round 3 Story
         [
-            "Captain Rex: \"Still no contact with Command. Commencing manual diagnostics.\"",
-            "An alert sounds: proximity warning. Asteroids are closing in.",
-            "Captain Rex: \"These asteroids are moving unusually... almost deliberate.\"",
-            "He notices strange energy signatures among the asteroids.",
-            "Captain Rex: \"Wait, are those ships hidden among the rocks?\"",
-            "Suddenly, shadowy figures dart between asteroids.",
-            "Captain Rex: \"Could that be the fugitives? Time to find out.\"",
-            "He prepares his weapons systems, eyes scanning the chaotic field.",
-            "Captain Rex: \"If they want a fight, they'll get one.\"",
-            "Determined, he dives into the fray."
+            "Captain Rex: \"Enemy ships detected! They're engaging our position.\"",
+            "Space Command: \"Understood, Captain. Engage them with all available weapons.\"",
+            "Captain Rex: \"Firing lasers! Taking heavy fire in return.\"",
+            "Space Command: \"Be cautious, Rex. They seem organized and relentless.\"",
+            "Captain Rex: \"Affirmative. Maneuvering to evade incoming fire.\"",
+            "Enemy ships are closing in, attempting to outflank our position.",
+            "Captain Rex: \"They're forming a pincer move. Need to break their formation.\"",
+            "Space Command: \"Use the asteroid fields as cover. It might give you the advantage.\"",
+            "Captain Rex: \"Good idea. Diving into the nearest asteroid to hide our movements.\"",
+            "Space Command: \"Stay sharp, Captain. The enemy isn't giving up easily.\""
         ],
         // Round 4 Story
         [
-            "Captain Rex: \"The asteroids have formed patterns. Something's directing them.\"",
-            "Space Command: \"Rex, be cautious. Enemy forces may be coordinating their attacks.\"",
-            "Captain Rex: \"Understood. Increasing defensive maneuvers.\"",
-            "Enemy ships begin to appear, firing at your ship.",
-            "Captain Rex: \"Enemy ships detected. They're aggressive.\"",
-            "Space Command: \"Engage them carefully, Captain. Protect the sector.\"",
-            "Captain Rex: \"Affirmative. Opening fire.\"",
-            "The battle intensifies as more enemy ships join the fight.",
-            "Captain Rex: \"We need to eliminate their flagship.\"",
-            "Space Command: \"Proceed with caution. It could be a trap.\""
+            "Captain Rex: \"Some of these asteroids are housing enemy weapons outposts.\"",
+            "Space Command: \"Be careful, Rex. Those outposts are heavily fortified.\"",
+            "Captain Rex: \"Engaging the outpost's defenses. It's more challenging than anticipated.\"",
+            "Space Command: \"Deploy additional firepower if you can. We can't let them bolster their arsenal.\"",
+            "Captain Rex: \"Understood. Launching missiles towards the enemy outpost.\"",
+            "The outpost retaliates with concentrated energy blasts.",
+            "Captain Rex: \"Taking heavy fire. Shields are holding for now.\"",
+            "Space Command: \"Maintain your assault, Captain. We need to cripple their operations.\"",
+            "Captain Rex: \"Shields are holding, but the hull integrity is compromised.\"",
+            "Space Command: \"Proceed with caution. Your safety is our priority.\""
         ],
         // Round 5 Story
         [
-            "Captain Rex: \"Engaging enemy ships. Their movements are unpredictable.\"",
-            "Space Command: \"Stay sharp, Captain. We're monitoring their tactics.\"",
-            "An enemy flagship appears, larger and more formidable.",
-            "Captain Rex: \"Targeting the enemy flagship.\"",
-            "The flagship retaliates with heavy fire.",
-            "Captain Rex: \"Incoming fire! Evading.\"",
-            "Navigating through dense asteroid fields to reach the flagship.",
-            "Captain Rex: \"Almost there...\"",
-            "Space Command: \"All units focus fire on the flagship.\"",
-            "Captain Rex: \"Launch missiles!\""
+            "Captain Rex: \"Taking heavy fire from enemy reinforcements. There are almost too many.\"",
+            "Space Command: \"Rex, hold your ground. We are dispatching additional support.\"",
+            "Captain Rex: \"Enemy numbers are overwhelming. Our defenses are stretched thin.\"",
+            "Space Command: \"Maintain your position. Reinforcements should arrive shortly.\"",
+            "Captain Rex: \"Enemy ships are relentless. It's like they're anticipating our every move.\"",
+            "Space Command: \"They must have intelligence on our patrol routes. Stay alert.\"",
+            "Captain Rex: \"Using evasive maneuvers to confuse the enemy. It's only buying us time.\"",
+            "Space Command: \"Reinforcements are en route. Hold out as long as you can.\"",
+            "Captain Rex: \"Understood. Preparing for a coordinated defense.\"",
+            "Space Command: \"Good luck, Captain. We're all counting on you.\""
         ],
         // Round 6 Story
         [
-            "The flagship is destroyed, causing a massive explosion.",
-            "Captain Rex: \"Flagship down! Enemy forces are retreating.\"",
-            "Space Command: \"Excellent work, Captain. Sector 7G is secured.\"",
-            "Suddenly, more enemy ships emerge from the shadows.",
-            "Captain Rex: \"More enemies? This isn't over.\"",
-            "A new wave of enemy ships begins to attack relentlessly.",
-            "Captain Rex: \"We need backup!\"",
-            "Space Command: \"Holding position, Captain. Reinforcements are on the way.\"",
-            "The battle rages on as you fend off the incoming enemies.",
-            "Captain Rex: \"This is getting intense. We must hold our ground.\""
+            "Captain Rex: \"The enemy is well-prepared. Their tactics are superior to ours.\"",
+            "Space Command: \"Adjust your strategy, Rex. Adapt to their movements.\"",
+            "Captain Rex: \"Affirmative. Changing formation to counter their assault.\"",
+            "Enemy ships are deploying advanced weaponry and coordinated attacks.",
+            "Captain Rex: \"Their flagship has appeared. It’s directing their forces.\"",
+            "Space Command: \"Focus your fire on the flagship. Neutralizing it could disorient the enemy.\"",
+            "Captain Rex: \"Targeting the flagship now. Preparing to launch heavy ordnance.\"",
+            "The flagship retaliates with a devastating energy beam.",
+            "Captain Rex: \"Incoming beam! Evading at maximum speed.\"",
+            "Space Command: \"Hold steady, Captain. Aim for the flagship's weak points.\""
         ],
         // Round 7 Story
         [
-            "Reinforcements arrive, aiding in the defense against enemy ships.",
-            "Captain Rex: \"Reinforcements received. Together, we can push them back.\"",
-            "The combined forces overpower the enemy fleet.",
-            "Space Command: \"Maintain formation. Secure all enemy vessels.\"",
-            "Captain Rex: \"All enemy ships have been neutralized.\"",
-            "A peaceful calm settles over the sector once more.",
-            "Captain Rex: \"Mission accomplished. Returning to base.\"",
-            "Space Command: \"Well done, Captain. You've ensured the safety of sector 7G.\"",
-            "Captain Rex: \"Thank you, Command. Awaiting further instructions.\"",
-            "The ship sets a course back to the home base, victorious."
+            "Captain Rex: \"What the hell was that? It was some sort of translucent goo? Glowing bright green and destroying everything it touches.\"",
+            "Space Command: \"Unknown substance detected. It appears to be a form of energy-based weapon.\"",
+            "Captain Rex: \"It's spreading rapidly, compromising our systems and hull integrity.\"",
+            "Space Command: \"Attempt to contain the spread. Use your shield generators to create barriers.\"",
+            "Captain Rex: \"Shields are fluctuating. The goo is disrupting our systems.\"",
+            "Space Command: \"Deploy anti-viral protocols to purge the contamination.\"",
+            "Captain Rex: \"Engaging protocols now. The goo is resisting our containment efforts.\"",
+            "Space Command: \"Fallback to emergency protocols. We need to stabilize the ship.\"",
+            "Captain Rex: \"Stabilizing ship's core. The contamination is slowing down.\"",
+            "Space Command: \"Good work, Captain. Continue to monitor for any further anomalies.\""
         ],
         // Round 8 Story
         [
-            "As you approach the base, sensors detect residual energy signatures.",
-            "Captain Rex: \"Unusual energy readings near the base.\"",
-            "Space Command: \"Investigate cautiously, Captain. It might be remnants of the enemy.\"",
-            "Navigating through debris and damaged asteroids towards the base.",
-            "Captain Rex: \"Approaching the energy signatures.\"",
-            "An enemy probe emerges, testing the base's defenses.",
-            "Captain Rex: \"Enemy probe detected. Engaging.\"",
-            "The probe fires energy blasts, but your defenses hold strong.",
-            "Captain Rex: \"Probe neutralized. No further threats detected.\"",
-            "Space Command: \"All systems are operational. Welcome back, Captain.\""
+            "Captain Rex: \"Something is happening. Where are all these asteroids coming from?\"",
+            "Space Command: \"Analyzing data... It appears to be a coordinated deployment from multiple sectors.\"",
+            "Captain Rex: \"This is unprecedented. The asteroid density is off the charts.\"",
+            "Space Command: \"Rex, it seems the enemy is using advanced technology to manipulate the asteroid fields.\"",
+            "Captain Rex: \"If they control the asteroids, they can ambush us at any point.\"",
+            "Space Command: \"We need to disrupt their control mechanisms. Focus on disabling their satellites.\"",
+            "Captain Rex: \"Understood. Scanning for satellite installations within the asteroid clusters.\"",
+            "Space Command: \"Proceed with caution. These installations are likely heavily guarded.\"",
+            "Captain Rex: \"Engaging enemy satellites. It’s a tough battle, but we must persevere.\"",
+            "Space Command: \"Stay focused, Captain. The fate of the sector depends on your success.\""
         ],
         // Round 9 Story
         [
-            "Space Command: \"Captain, we've received distress signals from nearby sectors.\"",
-            "Captain Rex: \"Setting course to investigate. Might be more fugitives hiding out.\"",
-            "The journey takes you through increasingly hostile asteroid fields.",
-            "Captain Rex: \"These asteroids are more volatile. Adjusting trajectory.\"",
-            "Enemy ships begin to ambush your vessel, attempting to prevent your progress.",
-            "Captain Rex: \"Enemy ships attacking. Engaging them.\"",
-            "A fierce battle ensues as you fend off multiple enemy vessels.",
-            "Space Command: \"Maintain your position, Captain. Reinforcements are on their way.\"",
-            "Captain Rex: \"Understood. We need to hold until backup arrives.\"",
-            "The enemy assaults intensify, pushing your ship to its limits."
+            "Captain Rex: \"Space Command, what's going on? Has something happened? There are too many asteroids.\"",
+            "Space Command: \"Affirmative, Rex. We're detecting multiple large-scale disruptions across sectors.\"",
+            "Captain Rex: \"It’s like a cosmic storm. The asteroids are accelerating towards our position.\"",
+            "Space Command: \"Rex, initiate emergency protocols. We need to find a safe passage out of the asteroid belt.\"",
+            "Captain Rex: \"I'm trying to map a path, but the debris is too dense. It's impeding our navigation systems.\"",
+            "Space Command: \"Divert power to the navigation thrusters. We might be able to create a temporary corridor.\"",
+            "Captain Rex: \"Diverting power now. Attempting to create a pathway through the debris.\"",
+            "Space Command: \"Be cautious. The debris fields are unstable and unpredictable.\"",
+            "Captain Rex: \"Pathway is partially clear, but the engines are struggling against the debris.\"",
+            "Space Command: \"Maintain your course, Captain. Reinforcements are being deployed to assist you.\""
         ],
         // Round 10 Story
         [
-            "Alarms blare as the station comes to life.",
-            "Voice: \"Intruder detected. Initiating containment protocol.\"",
-            "Captain Rex: \"Not good! Time to go!\"",
-            "He races back to his ship as doors start sealing.",
-            "Captain Rex: \"Come on, come on!\"",
-            "He barely makes it aboard, powering up the engines.",
-            "Captain Rex: \"I've overstayed my welcome.\"",
-            "As he departs, the station emits a massive energy pulse.",
-            "Captain Rex: \"What now?\"",
-            "The pulse disables the pursuing enemies. Communications crackle back online.",
-            "Space Command: \"Captain Rex, do you copy? We've re-established contact.\"",
-            "Captain Rex: \"Command! You won't believe what I've been through...\""
+            "Captain Rex: \"I can't find a path out. Where did all this debris come from? Space Command, I'm not gonna make it.\"",
+            "Space Command: \"Rex, hold on! We're deploying a rescue team immediately.\"",
+            "Captain Rex: \"The ship's integrity is failing. The debris is tearing us apart.\"",
+            "Space Command: \"Initiate self-destruct protocols to prevent enemy capture.\"",
+            "Captain Rex: \"Understood. Preparing to self-destruct.\"",
+            "The ship starts to power down, systems failing one by one.",
+            "Captain Rex: \"It's been an honor serving with you, Command. Take care of our sector.\"",
+            "Space Command: \"Rex, stay strong! We're on our way to extract you.\"",
+            "Captain Rex: \"There's too much debris. I don't see any escape routes.\"",
+            "Space Command: \"Rex, don't give up! Reinforcements are almost here. Hang in there!\""
         ]
     ];
+
 
     // Ship class
     class Ship {
@@ -385,7 +387,7 @@
             if (this.y > canvas.height + this.radius) this.y = -this.radius;
 
             // Handle shooting
-            if (round >= enemyShipStartRound && this.color === CRT_RED) {
+            if (round >= enemyBaseStartRound && this.color === CRT_RED) {
                 this.shootTimer++;
                 if (this.shootTimer >= this.shootInterval) {
                     this.shoot();
@@ -480,6 +482,7 @@
             }
         }
 
+
         draw() {
             ctx.strokeStyle = this.color;
             ctx.lineWidth = 2;
@@ -498,6 +501,7 @@
             ctx.closePath();
             ctx.stroke();
         }
+
     }
 
     // Bullet class
@@ -635,13 +639,13 @@
 
         // Create initial asteroids and blobs
         createAsteroids(round);
-        if (round > 5) {
-            createBlobs(7 - round); // Create blobs based on the round
+        if (round >= blobStartRound) {
+            createBlobs( round % 2 ); // Create blobs based on the round
         }
 
         // Create enemy ships if the round is greater than or equal to the start round
         if (round >= enemyShipStartRound) {
-            createEnemyShips(2); // For example, create 2 enemy ships
+            createEnemyShips(round % 2); // For example, create 2 enemy ships
         }
 
         // Display the story
@@ -668,8 +672,8 @@
 
             // Determine asteroid color
             let color = CRT_GREEN; // Default color
-            const redAsteroidChance = 0.2; // 20% chance for red asteroid
-            if (Math.random() < redAsteroidChance) {
+            const redAsteroidChance = 0.01; // 1% chance for red asteroid
+            if (round >= enemyBaseStartRound && Math.random() < redAsteroidChance) {
                 color = CRT_RED;
             }
 
@@ -692,12 +696,14 @@
     // Function to create enemy ships based on round
     function createEnemyShips(num) {
         for (let i = 0; i < num; i++) {
+            if (enemyShips.length >= maxEnemyShips) break; // Prevent overcrowding
             let x, y;
             do {
                 x = Math.random() * canvas.width;
                 y = Math.random() * canvas.height;
             } while (distanceBetweenPoints(ship.x, ship.y, x, y) < 150); // Ensure enemy ships don't spawn too close to the player's ship
             enemyShips.push(new EnemyShip(x, y));
+            console.log(`Enemy Ship ${i + 1} created at (${x.toFixed(2)}, ${y.toFixed(2)})`);
         }
     }
 
@@ -751,13 +757,17 @@
         if (ship.alive) {
             if (keys['ArrowLeft']) {
                 ship.rotation = -0.05;
+                playBridgeSound();
             } else if (keys['ArrowRight']) {
                 ship.rotation = 0.05;
+                playBridgeSound();
             } else {
                 ship.rotation = 0;
+                stopBridgeSound();
             }
         } else {
             ship.rotation = 0;
+            stopBridgeSound();
         }
 
         // Bullets
@@ -843,7 +853,7 @@
                 ) {
                     handleShipDestruction();
 
-                    // Optionally, remove the enemy ship upon collision
+                    // Remove the enemy ship upon collision
                     enemyShips.splice(esIndex, 1);
                 }
             });
@@ -865,7 +875,7 @@
                     });
 
                     // Create explosion
-                    createExplosion(asteroid.x, asteroid.y, asteroid.radius);
+                    createExplosion(asteroid.x, asteroid.y, asteroid.radius, CRT_GREEN);
 
                     // Split asteroid
                     if (asteroid.level < 3) {
@@ -897,21 +907,64 @@
             });
         });
 
-        // Blobs and bullets collision (blobs cannot be destroyed, so nothing happens)
+        // Asteroids and Enemy Ships collision
+        asteroids.forEach((asteroid, aIndex) => {
+            enemyShips.forEach((enemyShip, esIndex) => {
+                if (
+                    distanceBetweenPoints(asteroid.x, asteroid.y, enemyShip.x, enemyShip.y) <
+                    asteroid.radius + enemyShip.radius
+                ) {
+                    // Optional: Remove or reduce the asteroid
+                    if (asteroid.level < 3) {
+                        let newRadius = asteroid.radius / 2;
+                        for (let i = 0; i < 2; i++) {
+                            asteroids.push(
+                                new Asteroid(asteroid.x, asteroid.y, newRadius, asteroid.level + 1, asteroid.color)
+                            );
+                        }
+                    }
+                    asteroids.splice(aIndex, 1); // Remove the asteroid
 
-        // Optionally, Enemy Ships and Asteroids collision
-        // enemyShips.forEach((enemyShip, esIndex) => {
-        //     asteroids.forEach((asteroid, aIndex) => {
-        //         if (
-        //             distanceBetweenPoints(enemyShip.x, enemyShip.y, asteroid.x, asteroid.y) <
-        //             enemyShip.radius + asteroid.radius
-        //         ) {
-        //             // Handle collision (e.g., destroy asteroid and enemy ship)
-        //             asteroids.splice(aIndex, 1);
-        //             enemyShips.splice(esIndex, 1);
-        //         }
-        //     });
-        // });
+                    // Handle enemy ship destruction
+                    handleEnemyShipDestruction(esIndex, enemyShip.x, enemyShip.y);
+                }
+            });
+        });
+
+        // Blobs and Enemy Ships collision
+        blobs.forEach((blob) => {
+            enemyShips.forEach((enemyShip, esIndex) => {
+                if (
+                    distanceBetweenPoints(blob.x, blob.y, enemyShip.x, enemyShip.y) <
+                    blob.radius + enemyShip.radius
+                ) {
+                    // Handle enemy ship destruction
+                    handleEnemyShipDestruction(esIndex, enemyShip.x, enemyShip.y);
+                }
+            });
+        });
+
+        // Bullets and Enemy Ships collision
+        bullets.forEach((bullet, bIndex) => {
+            enemyShips.forEach((enemyShip, esIndex) => {
+                if (
+                    distanceBetweenPoints(bullet.x, bullet.y, enemyShip.x, enemyShip.y) <
+                    bullet.radius + enemyShip.radius
+                ) {
+                    // Remove the player bullet
+                    bullets.splice(bIndex, 1);
+
+                    // Handle enemy ship destruction
+                    handleEnemyShipDestruction(esIndex, enemyShip.x, enemyShip.y);
+
+                    // Optional: Play a different sound for destroying enemy ships
+                    // enemyDestructionSound.currentTime = 0;
+                    // enemyDestructionSound.play().catch(error => {
+                    //     console.error("Enemy destruction sound playback failed:", error);
+                    // });
+                }
+            });
+        });
 
         // Check if all asteroids and enemy ships are destroyed
         if (asteroids.length === 0 && explosions.length === 0 && enemyShips.length === 0 && !shipDestroyed) {
@@ -929,10 +982,10 @@
             displayStory();
             createAsteroids(round);
             if (round >= enemyShipStartRound) {
-                createEnemyShips(2); // Spawn enemy ships in the new round if applicable
+                createEnemyShips(round % 2); // Spawn enemy ships in the new round if applicable
             }
-            if (round > 5) {
-                createBlobs(7 - round);
+            if (round >= blobStartRound) {
+                createBlobs(round % 2);
             }
         }
     }
@@ -1039,6 +1092,11 @@
 
     function keyUp(e) {
         keys[e.key] = false;
+
+        // Stop bridge sound when arrow keys are released
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            stopBridgeSound();
+        }
     }
 
     function distanceBetweenPoints(x1, y1, x2, y2) {
@@ -1046,12 +1104,12 @@
     }
 
     // Function to create an explosion at a given position
-    function createExplosion(x, y, radius) {
+    function createExplosion(x, y, radius, color = CRT_GREEN) {
         let numParticles = 20;
-        let colors = [CRT_GREEN, '#00CC00', '#009900']; // Shades of green
+        let colors = [color, '#00CC00', '#009900']; // Shades based on collision type
         for (let i = 0; i < numParticles; i++) {
-            let color = colors[Math.floor(Math.random() * colors.length)];
-            explosions.push(new Particle(x, y, color));
+            let particleColor = colors[Math.floor(Math.random() * colors.length)];
+            explosions.push(new Particle(x, y, particleColor));
         }
     }
 
@@ -1070,12 +1128,28 @@
         });
 
         // Create explosion at ship's position
-        createExplosion(ship.x, ship.y, ship.radius);
+        createExplosion(ship.x, ship.y, ship.radius, CRT_RED);
 
         // Set timeout to reset the game after 5 seconds
         setTimeout(() => {
             resetGame();
         }, 5000);
+    }
+
+    // Function to handle enemy ship destruction
+    function handleEnemyShipDestruction(esIndex, x, y) {
+        console.log(`Enemy Ship at (${x.toFixed(2)}, ${y.toFixed(2)}) destroyed`);
+        // Remove the enemy ship from the array
+        enemyShips.splice(esIndex, 1);
+
+        // Create explosion at the enemy ship's position with a different color
+        createExplosion(x, y, 20, CRT_RED); // Red explosions for enemy ships
+
+        // Play explosion sound (you can use the existing explosionSound or a different one)
+        explosionSound.currentTime = 0;
+        explosionSound.play().catch(error => {
+            console.error("Explosion sound playback failed:", error);
+        });
     }
 
     // Function to reset the game after ship destruction
@@ -1096,11 +1170,27 @@
         displayStory();
         createAsteroids(round);
         if (round >= enemyShipStartRound) {
-            createEnemyShips(2); // Spawn enemy ships in the reset round if applicable
+            createEnemyShips(round % 2); // Spawn enemy ships in the reset round if applicable
         }
-        if (round > 5) {
-            createBlobs(7 - round);
+        if (round >= blobStartRound) {
+            createBlobs(round % 2);
         }
+    }
+
+    // Function to play bridge sound
+    function playBridgeSound() {
+        if (!bridgeSound.playing && !bridgeSound.paused) return;
+        if (bridgeSound.paused) {
+            bridgeSound.currentTime = 0;
+            bridgeSound.play().catch(error => {
+                console.error("Bridge sound playback failed:", error);
+            });
+        }
+    }
+
+    // Function to stop bridge sound
+    function stopBridgeSound() {
+        bridgeSound.pause();
     }
 
     // Start the game after the window has fully loaded
