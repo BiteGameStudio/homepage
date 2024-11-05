@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Asteroids Game with Ship Explosion</title>
+    <title>Asteroids Game with Enemy Ships</title>
     <style>
         /* Importing Google Fonts - Press Start 2P for a retro 80s vibe */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
@@ -93,453 +93,906 @@
         <source src="/s/bridge.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
+    <!-- Optional: Enemy ship shooting sound -->
+    <audio id="enemyLaserSound">
+        <source src="/s/enemy_laser.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+</div>
 
-    <script>
-        // Get canvas and context
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const storyTextDiv = document.getElementById('storyText');
-        const storyInstructionsDiv = document.getElementById('storyInstructions'); // Added instructions div
+<script>
+    // Get canvas and context
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const storyTextDiv = document.getElementById('storyText');
+    const storyInstructionsDiv = document.getElementById('storyInstructions'); // Added instructions div
 
-        // Get audio elements
-        const ambientSound = document.getElementById('ambientSound');
-        const laserSound = document.getElementById('laserSound');
-        const bridgeSound = document.getElementById('shipBridgeSound');
-        const explosionSound = document.getElementById('explosionSound');
-        const shipExplosionSound = document.getElementById('shipExplosionSound');
+    // Get audio elements
+    const ambientSound = document.getElementById('ambientSound');
+    const laserSound = document.getElementById('laserSound');
+    const bridgeSound = document.getElementById('shipBridgeSound');
+    const explosionSound = document.getElementById('explosionSound');
+    const shipExplosionSound = document.getElementById('shipExplosionSound');
+    const enemyLaserSound = document.getElementById('enemyLaserSound'); // Optional
 
-        // Color constants
-        const CRT_GREEN = '#00FF00';
-        const CRT_RED = '#FF0000'; // Bright red color
-        const AMBER = '#FFBF00';
-        const CRT_BLUE = '#00BFFF';
+    // Color constants
+    const CRT_GREEN = '#00FF00';
+    const CRT_RED = '#FF0000'; // Bright red color
+    const CRT_PURPLE = '#FF00FF'; // Purple for enemy bullets
+    const AMBER = '#FFBF00';
+    const CRT_BLUE = '#00BFFF';
 
-        // Game variables
-        let ship;
-        let asteroids = [];
-        let bullets = [];
-        let enemyBullets = []; // Array to hold enemy bullets
-        let explosions = [];
-        let blobs = []; // Array to hold blobs
-        let keys = {};
-        let round = 1;
-        let inStoryMode = true;
-        let currentStoryPage = 0;
-        let shipDestroyed = false;
-        const enemyAttackStartRound = 1; // Configure the round to start enemy attacks
+    // Game variables
+    let ship;
+    let asteroids = [];
+    let bullets = [];
+    let enemyShips = []; // Array to hold enemy ships
+    let enemyBullets = []; // Array to hold enemy bullets
+    let explosions = [];
+    let blobs = []; // Array to hold blobs
+    let keys = {};
+    let round = 1;
+    let inStoryMode = true;
+    let currentStoryPage = 0;
+    let shipDestroyed = false;
+    const enemyShipStartRound = 1; // Configure the round to start enemy ships
 
-        // Story arrays
-        const stories = [
-            // Round 1 Story
-            [
-                "Captain Rex: \"This is Rex, reporting in from sector 7G. All systems are nominal.\"",
-                "Space Command: \"Copy that, Captain. Any sign of the fugitives?\"",
-                "Captain Rex: \"Not yet. They've gone quiet since entering this region.\"",
-                "Space Command: \"Be advised, you're approaching uncharted territory.\"",
-                "Captain Rex: \"Understood. The star density is increasing. Proceeding with caution.\"",
-                "Space Command: \"Our sensors indicate possible asteroid fields ahead.\"",
-                "Captain Rex: \"Affirmative. I'm starting to pick up asteroids on the radar.\"",
-                "Space Command: \"Maintain vigilance. The fugitives might be hiding out there.\"",
-                "Captain Rex: \"Will do. Nothing untoward so far, but I'll stay sharp.\"",
-                "Space Command: \"We're counting on you, Captain. Begin your sweep when ready.\""
-            ],
-            // Round 2 Story
-            [
-                "Captain Rex: \"Space Command, do you read? I'm noticing unusual readings.\"",
-                "Space Command: \"...tain...x... signal...weak...\"",
-                "Captain Rex: \"Repeat that, Command. You're breaking up.\"",
-                "Static fills the channel, and Rex hears faint, distorted voices.",
-                "Captain Rex: \"Something's not right here. Systems are acting up.\"",
-                "He checks his instruments, which flicker erratically.",
-                "Captain Rex: \"Is anyone there? Respond!\"",
-                "The only reply is garbled noise and intermittent silence.",
-                "A sense of unease settles in as the asteroid field grows denser.",
-                "Captain Rex grips the controls tighter: \"I have a bad feeling about this...\""
-            ],
-            // Round 3 Story
-            [
-                "Captain Rex: \"Still no contact with Command. Commencing manual diagnostics.\"",
-                "An alert sounds: proximity warning. Asteroids are closing in.",
-                "Captain Rex: \"These asteroids are moving unusually... almost deliberate.\"",
-                "He notices strange energy signatures among the asteroids.",
-                "Captain Rex: \"Wait, are those ships hidden among the rocks?\"",
-                "Suddenly, shadowy figures dart between asteroids.",
-                "Captain Rex: \"Could that be the fugitives? Time to find out.\"",
-                "He prepares his weapons systems, eyes scanning the chaotic field.",
-                "Captain Rex: \"If they want a fight, they'll get one.\"",
-                "Determined, he dives into the fray."
-            ],
-            // ... (Continue for other rounds)
-            // Round 10 Story
-            [
-                "Alarms blare as the station comes to life.",
-                "Voice: \"Intruder detected. Initiating containment protocol.\"",
-                "Captain Rex: \"Not good! Time to go!\"",
-                "He races back to his ship as doors start sealing.",
-                "Captain Rex: \"Come on, come on!\"",
-                "He barely makes it aboard, powering up the engines.",
-                "Captain Rex: \"I've overstayed my welcome.\"",
-                "As he departs, the station emits a massive energy pulse.",
-                "Captain Rex: \"What now?\"",
-                "The pulse disables the pursuing enemies. Communications crackle back online.",
-                "Space Command: \"Captain Rex, do you copy? We've re-established contact.\"",
-                "Captain Rex: \"Command! You won't believe what I've been through...\""
-            ]
-        ];
+    // Story arrays
+    const stories = [
+        // Round 1 Story
+        [
+            "Captain Rex: \"This is Rex, reporting in from sector 7G. All systems are nominal.\"",
+            "Space Command: \"Copy that, Captain. Any sign of the fugitives?\"",
+            "Captain Rex: \"Not yet. They've gone quiet since entering this region.\"",
+            "Space Command: \"Be advised, you're approaching uncharted territory.\"",
+            "Captain Rex: \"Understood. The star density is increasing. Proceeding with caution.\"",
+            "Space Command: \"Our sensors indicate possible asteroid fields ahead.\"",
+            "Captain Rex: \"Affirmative. I'm starting to pick up asteroids on the radar.\"",
+            "Space Command: \"Maintain vigilance. The fugitives might be hiding out there.\"",
+            "Captain Rex: \"Will do. Nothing untoward so far, but I'll stay sharp.\"",
+            "Space Command: \"We're counting on you, Captain. Begin your sweep when ready.\""
+        ],
+        // Round 2 Story
+        [
+            "Captain Rex: \"Space Command, do you read? I'm noticing unusual readings.\"",
+            "Space Command: \"...tain...x... signal...weak...\"",
+            "Captain Rex: \"Repeat that, Command. You're breaking up.\"",
+            "Static fills the channel, and Rex hears faint, distorted voices.",
+            "Captain Rex: \"Something's not right here. Systems are acting up.\"",
+            "He checks his instruments, which flicker erratically.",
+            "Captain Rex: \"Is anyone there? Respond!\"",
+            "The only reply is garbled noise and intermittent silence.",
+            "A sense of unease settles in as the asteroid field grows denser.",
+            "Captain Rex grips the controls tighter: \"I have a bad feeling about this...\""
+        ],
+        // Round 3 Story
+        [
+            "Captain Rex: \"Still no contact with Command. Commencing manual diagnostics.\"",
+            "An alert sounds: proximity warning. Asteroids are closing in.",
+            "Captain Rex: \"These asteroids are moving unusually... almost deliberate.\"",
+            "He notices strange energy signatures among the asteroids.",
+            "Captain Rex: \"Wait, are those ships hidden among the rocks?\"",
+            "Suddenly, shadowy figures dart between asteroids.",
+            "Captain Rex: \"Could that be the fugitives? Time to find out.\"",
+            "He prepares his weapons systems, eyes scanning the chaotic field.",
+            "Captain Rex: \"If they want a fight, they'll get one.\"",
+            "Determined, he dives into the fray."
+        ],
+        // Round 4 Story
+        [
+            "Captain Rex: \"The asteroids have formed patterns. Something's directing them.\"",
+            "Space Command: \"Rex, be cautious. Enemy forces may be coordinating their attacks.\"",
+            "Captain Rex: \"Understood. Increasing defensive maneuvers.\"",
+            "Enemy ships begin to appear, firing at your ship.",
+            "Captain Rex: \"Enemy ships detected. They're aggressive.\"",
+            "Space Command: \"Engage them carefully, Captain. Protect the sector.\"",
+            "Captain Rex: \"Affirmative. Opening fire.\"",
+            "The battle intensifies as more enemy ships join the fight.",
+            "Captain Rex: \"We need to eliminate their flagship.\"",
+            "Space Command: \"Proceed with caution. It could be a trap.\""
+        ],
+        // Round 5 Story
+        [
+            "Captain Rex: \"Engaging enemy ships. Their movements are unpredictable.\"",
+            "Space Command: \"Stay sharp, Captain. We're monitoring their tactics.\"",
+            "An enemy flagship appears, larger and more formidable.",
+            "Captain Rex: \"Targeting the enemy flagship.\"",
+            "The flagship retaliates with heavy fire.",
+            "Captain Rex: \"Incoming fire! Evading.\"",
+            "Navigating through dense asteroid fields to reach the flagship.",
+            "Captain Rex: \"Almost there...\"",
+            "Space Command: \"All units focus fire on the flagship.\"",
+            "Captain Rex: \"Launch missiles!\""
+        ],
+        // Round 6 Story
+        [
+            "The flagship is destroyed, causing a massive explosion.",
+            "Captain Rex: \"Flagship down! Enemy forces are retreating.\"",
+            "Space Command: \"Excellent work, Captain. Sector 7G is secured.\"",
+            "Suddenly, more enemy ships emerge from the shadows.",
+            "Captain Rex: \"More enemies? This isn't over.\"",
+            "A new wave of enemy ships begins to attack relentlessly.",
+            "Captain Rex: \"We need backup!\"",
+            "Space Command: \"Holding position, Captain. Reinforcements are on the way.\"",
+            "The battle rages on as you fend off the incoming enemies.",
+            "Captain Rex: \"This is getting intense. We must hold our ground.\""
+        ],
+        // Round 7 Story
+        [
+            "Reinforcements arrive, aiding in the defense against enemy ships.",
+            "Captain Rex: \"Reinforcements received. Together, we can push them back.\"",
+            "The combined forces overpower the enemy fleet.",
+            "Space Command: \"Maintain formation. Secure all enemy vessels.\"",
+            "Captain Rex: \"All enemy ships have been neutralized.\"",
+            "A peaceful calm settles over the sector once more.",
+            "Captain Rex: \"Mission accomplished. Returning to base.\"",
+            "Space Command: \"Well done, Captain. You've ensured the safety of sector 7G.\"",
+            "Captain Rex: \"Thank you, Command. Awaiting further instructions.\"",
+            "The ship sets a course back to the home base, victorious."
+        ],
+        // Round 8 Story
+        [
+            "As you approach the base, sensors detect residual energy signatures.",
+            "Captain Rex: \"Unusual energy readings near the base.\"",
+            "Space Command: \"Investigate cautiously, Captain. It might be remnants of the enemy.\"",
+            "Navigating through debris and damaged asteroids towards the base.",
+            "Captain Rex: \"Approaching the energy signatures.\"",
+            "An enemy probe emerges, testing the base's defenses.",
+            "Captain Rex: \"Enemy probe detected. Engaging.\"",
+            "The probe fires energy blasts, but your defenses hold strong.",
+            "Captain Rex: \"Probe neutralized. No further threats detected.\"",
+            "Space Command: \"All systems are operational. Welcome back, Captain.\""
+        ],
+        // Round 9 Story
+        [
+            "Space Command: \"Captain, we've received distress signals from nearby sectors.\"",
+            "Captain Rex: \"Setting course to investigate. Might be more fugitives hiding out.\"",
+            "The journey takes you through increasingly hostile asteroid fields.",
+            "Captain Rex: \"These asteroids are more volatile. Adjusting trajectory.\"",
+            "Enemy ships begin to ambush your vessel, attempting to prevent your progress.",
+            "Captain Rex: \"Enemy ships attacking. Engaging them.\"",
+            "A fierce battle ensues as you fend off multiple enemy vessels.",
+            "Space Command: \"Maintain your position, Captain. Reinforcements are on their way.\"",
+            "Captain Rex: \"Understood. We need to hold until backup arrives.\"",
+            "The enemy assaults intensify, pushing your ship to its limits."
+        ],
+        // Round 10 Story
+        [
+            "Alarms blare as the station comes to life.",
+            "Voice: \"Intruder detected. Initiating containment protocol.\"",
+            "Captain Rex: \"Not good! Time to go!\"",
+            "He races back to his ship as doors start sealing.",
+            "Captain Rex: \"Come on, come on!\"",
+            "He barely makes it aboard, powering up the engines.",
+            "Captain Rex: \"I've overstayed my welcome.\"",
+            "As he departs, the station emits a massive energy pulse.",
+            "Captain Rex: \"What now?\"",
+            "The pulse disables the pursuing enemies. Communications crackle back online.",
+            "Space Command: \"Captain Rex, do you copy? We've re-established contact.\"",
+            "Captain Rex: \"Command! You won't believe what I've been through...\""
+        ]
+    ];
 
-        // Ship class
-        class Ship {
-            constructor() {
-                this.x = canvas.width / 2;
-                this.y = canvas.height / 2;
-                this.radius = 15;
-                this.angle = 0;
-                this.rotation = 0;
-                this.thrust = {
-                    x: 0,
-                    y: 0
-                };
-                this.acceleration = 0.1;
-                this.friction = 0.99;
-                this.alive = true;
-            }
+    // Ship class
+    class Ship {
+        constructor() {
+            this.x = canvas.width / 2;
+            this.y = canvas.height / 2;
+            this.radius = 15;
+            this.angle = 0;
+            this.rotation = 0;
+            this.thrust = {
+                x: 0,
+                y: 0
+            };
+            this.acceleration = 0.1;
+            this.friction = 0.99;
+            this.alive = true;
+        }
 
-            update() {
-                if (this.alive) {
-                    // Rotate ship
-                    this.angle += this.rotation;
+        update() {
+            if (this.alive) {
+                // Rotate ship
+                this.angle += this.rotation;
 
-                    // Move ship
-                    if (keys['ArrowUp']) {
-                        this.thrust.x += this.acceleration * Math.cos(this.angle);
-                        this.thrust.y += this.acceleration * Math.sin(this.angle);
-                    } else {
-                        // Apply friction
-                        this.thrust.x *= this.friction;
-                        this.thrust.y *= this.friction;
-                    }
-
-                    this.x += this.thrust.x;
-                    this.y += this.thrust.y;
-
-                    // Screen edges
-                    if (this.x < 0) this.x = canvas.width;
-                    if (this.x > canvas.width) this.x = 0;
-                    if (this.y < 0) this.y = canvas.height;
-                    if (this.y > canvas.height) this.y = 0;
+                // Move ship
+                if (keys['ArrowUp']) {
+                    this.thrust.x += this.acceleration * Math.cos(this.angle);
+                    this.thrust.y += this.acceleration * Math.sin(this.angle);
+                } else {
+                    // Apply friction
+                    this.thrust.x *= this.friction;
+                    this.thrust.y *= this.friction;
                 }
-            }
 
-            draw() {
-                if (this.alive) {
-                    ctx.lineWidth = 2;
-                    const frontX = this.x + this.radius * Math.cos(this.angle);
-                    const frontY = this.y + this.radius * Math.sin(this.angle);
-                    const leftX = this.x + this.radius * Math.cos(this.angle + 2 * Math.PI / 3);
-                    const leftY = this.y + this.radius * Math.sin(this.angle + 2 * Math.PI / 3);
-                    const rightX = this.x + this.radius * Math.cos(this.angle + 4 * Math.PI / 3);
-                    const rightY = this.y + this.radius * Math.sin(this.angle + 4 * Math.PI / 3);
+                this.x += this.thrust.x;
+                this.y += this.thrust.y;
 
-                    // Front line (front tip to right back point) - CRT_BLUE
-                    ctx.beginPath();
-                    ctx.moveTo(frontX, frontY);
-                    ctx.lineTo(rightX, rightY);
-                    ctx.strokeStyle = CRT_BLUE;
-                    ctx.stroke();
-
-                    // Right back line (right back point to left back point) - CRT Green
-                    ctx.beginPath();
-                    ctx.moveTo(rightX, rightY);
-                    ctx.lineTo(leftX, leftY);
-                    ctx.strokeStyle = CRT_GREEN;
-                    ctx.stroke();
-
-                    // Left back line (left back point to front tip) - CRT_BLUE
-                    ctx.beginPath();
-                    ctx.moveTo(leftX, leftY);
-                    ctx.lineTo(frontX, frontY);
-                    ctx.strokeStyle = CRT_BLUE;
-                    ctx.stroke();
-                }
+                // Screen edges
+                if (this.x < 0) this.x = canvas.width;
+                if (this.x > canvas.width) this.x = 0;
+                if (this.y < 0) this.y = canvas.height;
+                if (this.y > canvas.height) this.y = 0;
             }
         }
 
-        // Asteroid class
-        class Asteroid {
-            constructor(x, y, radius, level, color = CRT_GREEN) { // Default color is green
-                this.x = x;
-                this.y = y;
-                this.radius = radius;
-                this.level = level;
-                this.color = color; // New property for color
-                this.angle = Math.random() * Math.PI * 2;
-                this.speed = Math.random() * 1.5 + 0.5;
-                this.vx = Math.cos(this.angle) * this.speed;
-                this.vy = Math.sin(this.angle) * this.speed;
-                this.vertices = Math.floor(Math.random() * 5 + 5);
-                this.offset = [];
-
-                for (let i = 0; i < this.vertices; i++) {
-                    this.offset.push(Math.random() * this.radius / 2 - this.radius / 4);
-                }
-
-                // Shooting properties
-                this.shootInterval = Math.floor(Math.random() * 200 + 100); // Frames between shots
-                this.shootTimer = 0;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Screen edges - wrap around
-                if (this.x < -this.radius) this.x = canvas.width + this.radius;
-                if (this.x > canvas.width + this.radius) this.x = -this.radius;
-                if (this.y < -this.radius) this.y = canvas.height + this.radius;
-                if (this.y > canvas.height + this.radius) this.y = -this.radius;
-
-                // Handle shooting
-                if (round >= enemyAttackStartRound && this.color === CRT_RED) {
-                    this.shootTimer++;
-                    if (this.shootTimer >= this.shootInterval) {
-                        this.shoot();
-                        this.shootTimer = 0;
-                        // Optionally, randomize the next shoot interval
-                        this.shootInterval = Math.floor(Math.random() * 200 + 100);
-                    }
-                }
-            }
-
-            shoot() {
-                // Calculate angle towards the ship
-                const angleToShip = Math.atan2(ship.y - this.y, ship.x - this.x);
-                enemyBullets.push(new EnemyBullet(this.x, this.y, angleToShip));
-
-                // Optionally, play a shooting sound
-                // You can add a new audio element for enemy shooting sounds if desired
-            }
-
-            draw() {
-                ctx.strokeStyle = this.color; // Use the asteroid's color
+        draw() {
+            if (this.alive) {
                 ctx.lineWidth = 2;
+                const frontX = this.x + this.radius * Math.cos(this.angle);
+                const frontY = this.y + this.radius * Math.sin(this.angle);
+                const leftX = this.x + this.radius * Math.cos(this.angle + 2 * Math.PI / 3);
+                const leftY = this.y + this.radius * Math.sin(this.angle + 2 * Math.PI / 3);
+                const rightX = this.x + this.radius * Math.cos(this.angle + 4 * Math.PI / 3);
+                const rightY = this.y + this.radius * Math.sin(this.angle + 4 * Math.PI / 3);
+
+                // Front line (front tip to right back point) - CRT_BLUE
                 ctx.beginPath();
-                for (let i = 0; i < this.vertices; i++) {
-                    const angle = ((Math.PI * 2) / this.vertices) * i;
-                    const r = this.radius + this.offset[i];
-                    const x = this.x + r * Math.cos(angle);
-                    const y = this.y + r * Math.sin(angle);
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                ctx.closePath();
+                ctx.moveTo(frontX, frontY);
+                ctx.lineTo(rightX, rightY);
+                ctx.strokeStyle = CRT_BLUE;
+                ctx.stroke();
+
+                // Right back line (right back point to left back point) - CRT_GREEN
+                ctx.beginPath();
+                ctx.moveTo(rightX, rightY);
+                ctx.lineTo(leftX, leftY);
+                ctx.strokeStyle = CRT_GREEN;
+                ctx.stroke();
+
+                // Left back line (left back point to front tip) - CRT_BLUE
+                ctx.beginPath();
+                ctx.moveTo(leftX, leftY);
+                ctx.lineTo(frontX, frontY);
+                ctx.strokeStyle = CRT_BLUE;
                 ctx.stroke();
             }
         }
+    }
 
-        // Bullet class
-        class Bullet {
-            constructor(x, y, angle) {
-                this.x = x;
-                this.y = y;
-                this.angle = angle;
-                this.speed = 5;
-                this.radius = 2;
-                this.life = 0;
-                this.maxLife = 60;
+    // Asteroid class
+    class Asteroid {
+        constructor(x, y, radius, level, color = CRT_GREEN) { // Default color is green
+            this.x = x;
+            this.y = y;
+            this.radius = radius;
+            this.level = level;
+            this.color = color; // New property for color
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = Math.random() * 1.5 + 0.5;
+            this.vx = Math.cos(this.angle) * this.speed;
+            this.vy = Math.sin(this.angle) * this.speed;
+            this.vertices = Math.floor(Math.random() * 5 + 5);
+            this.offset = [];
+
+            for (let i = 0; i < this.vertices; i++) {
+                this.offset.push(Math.random() * this.radius / 2 - this.radius / 4);
             }
 
-            update() {
-                this.x += this.speed * Math.cos(this.angle);
-                this.y += this.speed * Math.sin(this.angle);
+            // Shooting properties
+            this.shootInterval = Math.floor(Math.random() * 200 + 100); // Frames between shots
+            this.shootTimer = 0;
+        }
 
-                // Screen edges - wrap around
-                if (this.x < 0) this.x = canvas.width;
-                if (this.x > canvas.width) this.x = 0;
-                if (this.y < 0) this.y = canvas.height;
-                if (this.y > canvas.height) this.y = 0;
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
 
-                this.life++;
-            }
+            // Screen edges - wrap around
+            if (this.x < -this.radius) this.x = canvas.width + this.radius;
+            if (this.x > canvas.width + this.radius) this.x = -this.radius;
+            if (this.y < -this.radius) this.y = canvas.height + this.radius;
+            if (this.y > canvas.height + this.radius) this.y = -this.radius;
 
-            draw() {
-                ctx.fillStyle = CRT_BLUE;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
+            // Handle shooting
+            if (round >= enemyShipStartRound && this.color === CRT_RED) {
+                this.shootTimer++;
+                if (this.shootTimer >= this.shootInterval) {
+                    this.shoot();
+                    this.shootTimer = 0;
+                    // Randomize the next shoot interval
+                    this.shootInterval = Math.floor(Math.random() * 200 + 100);
+                }
             }
         }
 
-        // Enemy Bullet class
-        class EnemyBullet {
-            constructor(x, y, angle) {
-                this.x = x;
-                this.y = y;
-                this.angle = angle;
-                this.speed = 4; // Slightly faster than player's bullets
-                this.radius = 3;
-                this.life = 0;
-                this.maxLife = 120; // Lasts longer than player's bullets
-            }
+        shoot() {
+            // Calculate angle towards the ship
+            const angleToShip = Math.atan2(ship.y - this.y, ship.x - this.x);
+            enemyBullets.push(new EnemyBullet(this.x, this.y, angleToShip));
 
-            update() {
-                this.x += this.speed * Math.cos(this.angle);
-                this.y += this.speed * Math.sin(this.angle);
-
-                // Screen edges - wrap around
-                if (this.x < 0) this.x = canvas.width;
-                if (this.x > canvas.width) this.x = 0;
-                if (this.y < 0) this.y = canvas.height;
-                if (this.y > canvas.height) this.y = 0;
-
-                this.life++;
-            }
-
-            draw() {
-                ctx.fillStyle = CRT_RED;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
+            // Play enemy shooting sound
+            if (enemyLaserSound) {
+                enemyLaserSound.currentTime = 0;
+                enemyLaserSound.play().catch(error => {
+                    console.error("Enemy laser sound playback failed:", error);
+                });
             }
         }
 
-        // Explosion particle class
-        class Particle {
-            constructor(x, y, color) {
-                this.x = x;
-                this.y = y;
-                this.radius = Math.random() * 2 + 1;
-                this.speed = Math.random() * 2 + 1;
-                this.angle = Math.random() * Math.PI * 2;
-                this.life = 0;
-                this.maxLife = 50;
-                this.color = color;
+        draw() {
+            ctx.strokeStyle = this.color; // Use the asteroid's color
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let i = 0; i < this.vertices; i++) {
+                const angle = ((Math.PI * 2) / this.vertices) * i;
+                const r = this.radius + this.offset[i];
+                const x = this.x + r * Math.cos(angle);
+                const y = this.y + r * Math.sin(angle);
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
             }
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
 
-            update() {
-                this.x += this.speed * Math.cos(this.angle);
-                this.y += this.speed * Math.sin(this.angle);
-                this.life++;
-            }
+    // Enemy Ship class
+    class EnemyShip {
+        constructor(x, y) {
+            this.x = x;
+            this.y = y;
+            this.radius = 20; // Size of the enemy ship
+            this.angle = Math.random() * Math.PI * 2;
+            this.speed = Math.random() * 1 + 0.5; // Speed between 0.5 and 1.5
+            this.vx = Math.cos(this.angle) * this.speed;
+            this.vy = Math.sin(this.angle) * this.speed;
+            this.color = CRT_RED; // Enemy ship color
+            this.shootInterval = Math.floor(Math.random() * 300 + 200); // Frames between shots
+            this.shootTimer = 0;
+        }
 
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
+        update() {
+            // Move the enemy ship
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Wrap around screen edges
+            if (this.x < -this.radius) this.x = canvas.width + this.radius;
+            if (this.x > canvas.width + this.radius) this.x = -this.radius;
+            if (this.y < -this.radius) this.y = canvas.height + this.radius;
+            if (this.y > canvas.height + this.radius) this.y = -this.radius;
+
+            // Handle shooting
+            this.shootTimer++;
+            if (this.shootTimer >= this.shootInterval) {
+                this.shoot();
+                this.shootTimer = 0;
+                // Randomize the next shoot interval
+                this.shootInterval = Math.floor(Math.random() * 300 + 200);
             }
         }
 
-        // Blob class
-        class Blob {
-            constructor(x, y, radius) {
-                this.x = x;
-                this.y = y;
-                this.radius = radius || 15; // Default radius
-                this.speed = Math.random() * 2 + 1; // Random speed between 1 and 3
-                this.angle = Math.random() * Math.PI * 2; // Random direction
-                this.vx = this.speed * Math.cos(this.angle);
-                this.vy = this.speed * Math.sin(this.angle);
-                this.color = '#00FF00'; // Fel Magic Green
-            }
+        shoot() {
+            // Calculate angle towards the player's ship
+            const angleToPlayer = Math.atan2(ship.y - this.y, ship.x - this.x);
+            enemyBullets.push(new EnemyBullet(this.x, this.y, angleToPlayer));
 
-            update() {
-                // Move the blob
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Wrap around screen edges
-                if (this.x < -this.radius) this.x = canvas.width + this.radius;
-                if (this.x > canvas.width + this.radius) this.x = -this.radius;
-                if (this.y < -this.radius) this.y = canvas.height + this.radius;
-                if (this.y > canvas.height + this.radius) this.y = -this.radius;
-            }
-
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
+            // Play enemy shooting sound
+            if (enemyLaserSound) {
+                enemyLaserSound.currentTime = 0;
+                enemyLaserSound.play().catch(error => {
+                    console.error("Enemy laser sound playback failed:", error);
+                });
             }
         }
 
-        // Initialize game
-        function init() {
-            ship = new Ship();
-            shipDestroyed = false;
+        draw() {
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            // Simple triangle shape for the enemy ship
+            const frontX = this.x + this.radius * Math.cos(this.angle);
+            const frontY = this.y + this.radius * Math.sin(this.angle);
+            const leftX = this.x + this.radius * Math.cos(this.angle + (5 * Math.PI) / 6);
+            const leftY = this.y + this.radius * Math.sin(this.angle + (5 * Math.PI) / 6);
+            const rightX = this.x + this.radius * Math.cos(this.angle - (5 * Math.PI) / 6);
+            const rightY = this.y + this.radius * Math.sin(this.angle - (5 * Math.PI) / 6);
 
-            // Create initial asteroids and blobs
-            createAsteroids(round);
-            if (round > 5) {
-                createBlobs(7 - round); // Create blobs based on the round
+            ctx.moveTo(frontX, frontY);
+            ctx.lineTo(leftX, leftY);
+            ctx.lineTo(rightX, rightY);
+            ctx.closePath();
+            ctx.stroke();
+        }
+    }
+
+    // Bullet class
+    class Bullet {
+        constructor(x, y, angle) {
+            this.x = x;
+            this.y = y;
+            this.angle = angle;
+            this.speed = 5;
+            this.radius = 2;
+            this.color = CRT_BLUE;
+            this.life = 0;
+            this.maxLife = 60;
+        }
+
+        update() {
+            this.x += this.speed * Math.cos(this.angle);
+            this.y += this.speed * Math.sin(this.angle);
+
+            // Screen edges - wrap around
+            if (this.x < 0) this.x = canvas.width;
+            if (this.x > canvas.width) this.x = 0;
+            if (this.y < 0) this.y = canvas.height;
+            if (this.y > canvas.height) this.y = 0;
+
+            this.life++;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Enemy Bullet class
+    class EnemyBullet {
+        constructor(x, y, angle) {
+            this.x = x;
+            this.y = y;
+            this.angle = angle;
+            this.speed = 4; // Slightly faster than player's bullets
+            this.radius = 3;
+            this.color = CRT_PURPLE; // Color of enemy bullets
+            this.life = 0;
+            this.maxLife = 120; // Lifespan of enemy bullets
+        }
+
+        update() {
+            this.x += this.speed * Math.cos(this.angle);
+            this.y += this.speed * Math.sin(this.angle);
+
+            // Screen edges - wrap around
+            if (this.x < 0) this.x = canvas.width;
+            if (this.x > canvas.width) this.x = 0;
+            if (this.y < 0) this.y = canvas.height;
+            if (this.y > canvas.height) this.y = 0;
+
+            this.life++;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Explosion particle class
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.radius = Math.random() * 2 + 1;
+            this.speed = Math.random() * 2 + 1;
+            this.angle = Math.random() * Math.PI * 2;
+            this.life = 0;
+            this.maxLife = 50;
+            this.color = color;
+        }
+
+        update() {
+            this.x += this.speed * Math.cos(this.angle);
+            this.y += this.speed * Math.sin(this.angle);
+            this.life++;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Blob class
+    class Blob {
+        constructor(x, y, radius) {
+            this.x = x;
+            this.y = y;
+            this.radius = radius || 15; // Default radius
+            this.speed = Math.random() * 2 + 1; // Random speed between 1 and 3
+            this.angle = Math.random() * Math.PI * 2; // Random direction
+            this.vx = this.speed * Math.cos(this.angle);
+            this.vy = this.speed * Math.sin(this.angle);
+            this.color = '#00FF00'; // Fel Magic Green
+        }
+
+        update() {
+            // Move the blob
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Wrap around screen edges
+            if (this.x < -this.radius) this.x = canvas.width + this.radius;
+            if (this.x > canvas.width + this.radius) this.x = -this.radius;
+            if (this.y < -this.radius) this.y = canvas.height + this.radius;
+            if (this.y > canvas.height + this.radius) this.y = -this.radius;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    // Initialize game
+    function init() {
+        ship = new Ship();
+        shipDestroyed = false;
+
+        // Create initial asteroids and blobs
+        createAsteroids(round);
+        if (round > 5) {
+            createBlobs(7 - round); // Create blobs based on the round
+        }
+
+        // Create enemy ships if the round is greater than or equal to the start round
+        if (round >= enemyShipStartRound) {
+            createEnemyShips(2); // For example, create 2 enemy ships
+        }
+
+        // Display the story
+        inStoryMode = true;
+        currentStoryPage = 0;
+        displayStory();
+
+        // Event listeners
+        document.addEventListener('keydown', keyDown);
+        document.addEventListener('keyup', keyUp);
+
+        // Start game loop
+        gameLoop();
+    }
+
+    // Function to create asteroids based on round
+    function createAsteroids(num) {
+        for (let i = 0; i < num; i++) {
+            let x, y;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+            } while (distanceBetweenPoints(ship.x, ship.y, x, y) < 100);
+
+            // Determine asteroid color
+            let color = CRT_GREEN; // Default color
+            const redAsteroidChance = 0.2; // 20% chance for red asteroid
+            if (Math.random() < redAsteroidChance) {
+                color = CRT_RED;
             }
 
-            // Display the story
+            asteroids.push(new Asteroid(x, y, 50, 1, color));
+        }
+    }
+
+    // Function to create blobs based on round
+    function createBlobs(num) {
+        for (let i = 0; i < num; i++) {
+            let x, y;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+            } while (distanceBetweenPoints(ship.x, ship.y, x, y) < 100);
+            blobs.push(new Blob(x, y, 15)); // Radius 15 for visibility
+        }
+    }
+
+    // Function to create enemy ships based on round
+    function createEnemyShips(num) {
+        for (let i = 0; i < num; i++) {
+            let x, y;
+            do {
+                x = Math.random() * canvas.width;
+                y = Math.random() * canvas.height;
+            } while (distanceBetweenPoints(ship.x, ship.y, x, y) < 150); // Ensure enemy ships don't spawn too close to the player's ship
+            enemyShips.push(new EnemyShip(x, y));
+        }
+    }
+
+    // Function to display the story
+    function displayStory() {
+        if (currentStoryPage === 0) {
+            storyTextDiv.innerHTML = ''; // Clear previous story content
+            storyTextDiv.style.display = 'block'; // Ensure story text is visible
+            storyInstructionsDiv.style.display = 'block'; // Show instructions
+        }
+
+        if (stories[round - 1] && stories[round - 1][currentStoryPage]) {
+            // Create a new div for the story line
+            const lineDiv = document.createElement('div');
+            lineDiv.textContent = stories[round - 1][currentStoryPage];
+            storyTextDiv.appendChild(lineDiv);
+            currentStoryPage++;
+        } else {
+            // No more story pages, start the round
+            inStoryMode = false;
+            storyTextDiv.style.display = 'none';
+            storyInstructionsDiv.style.display = 'none'; // Hide instructions
+            canvas.style.display = 'block';
+
+            // Play ambient sound
+            ambientSound.currentTime = 0;
+            ambientSound.play().catch(error => {
+                console.error("Ambient sound playback failed:", error);
+            });
+        }
+    }
+
+    // Game loop
+    function gameLoop() {
+        if (!inStoryMode) {
+            // Update
+            update();
+
+            // Draw
+            draw();
+        }
+
+        // Loop
+        requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+        ship.update();
+
+        // Rotate ship
+        if (ship.alive) {
+            if (keys['ArrowLeft']) {
+                ship.rotation = -0.05;
+            } else if (keys['ArrowRight']) {
+                ship.rotation = 0.05;
+            } else {
+                ship.rotation = 0;
+            }
+        } else {
+            ship.rotation = 0;
+        }
+
+        // Bullets
+        bullets.forEach((bullet, index) => {
+            bullet.update();
+            if (bullet.life > bullet.maxLife) {
+                bullets.splice(index, 1);
+            }
+        });
+
+        // Asteroids
+        asteroids.forEach((asteroid) => {
+            asteroid.update();
+        });
+
+        // Blobs
+        blobs.forEach((blob) => {
+            blob.update();
+        });
+
+        // Enemy Ships
+        enemyShips.forEach((enemyShip) => {
+            enemyShip.update();
+        });
+
+        // Enemy Bullets
+        enemyBullets.forEach((enemyBullet, index) => {
+            enemyBullet.update();
+            if (enemyBullet.life > enemyBullet.maxLife) {
+                enemyBullets.splice(index, 1);
+            }
+        });
+
+        // Explosions
+        explosions.forEach((explosion, index) => {
+            explosion.update();
+            if (explosion.life > explosion.maxLife) {
+                explosions.splice(index, 1);
+            }
+        });
+
+        // Collision detection
+        if (ship.alive) {
+            // Ship collision with asteroids
+            asteroids.forEach((asteroid, aIndex) => {
+                if (
+                    distanceBetweenPoints(ship.x, ship.y, asteroid.x, asteroid.y) <
+                    ship.radius + asteroid.radius
+                ) {
+                    handleShipDestruction();
+                }
+            });
+
+            // Ship collision with blobs
+            blobs.forEach((blob) => {
+                if (
+                    distanceBetweenPoints(ship.x, ship.y, blob.x, blob.y) <
+                    ship.radius + blob.radius
+                ) {
+                    handleShipDestruction();
+                }
+            });
+
+            // Ship collision with enemy bullets
+            enemyBullets.forEach((enemyBullet, ebIndex) => {
+                if (
+                    distanceBetweenPoints(ship.x, ship.y, enemyBullet.x, enemyBullet.y) <
+                    ship.radius + enemyBullet.radius
+                ) {
+                    // Destroy the ship
+                    handleShipDestruction();
+
+                    // Remove the enemy bullet
+                    enemyBullets.splice(ebIndex, 1);
+                }
+            });
+
+            // Ship collision with enemy ships
+            enemyShips.forEach((enemyShip, esIndex) => {
+                if (
+                    distanceBetweenPoints(ship.x, ship.y, enemyShip.x, enemyShip.y) <
+                    ship.radius + enemyShip.radius
+                ) {
+                    handleShipDestruction();
+
+                    // Optionally, remove the enemy ship upon collision
+                    enemyShips.splice(esIndex, 1);
+                }
+            });
+        }
+
+        // Bullets and asteroids collision
+        bullets.forEach((bullet, bIndex) => {
+            asteroids.forEach((asteroid, aIndex) => {
+                if (
+                    distanceBetweenPoints(bullet.x, bullet.y, asteroid.x, asteroid.y) <
+                    asteroid.radius
+                ) {
+                    bullets.splice(bIndex, 1);
+
+                    // Play explosion sound
+                    explosionSound.currentTime = 0;
+                    explosionSound.play().catch(error => {
+                        console.error("Explosion sound playback failed:", error);
+                    });
+
+                    // Create explosion
+                    createExplosion(asteroid.x, asteroid.y, asteroid.radius);
+
+                    // Split asteroid
+                    if (asteroid.level < 3) {
+                        let newRadius = asteroid.radius / 2;
+                        for (let i = 0; i < 2; i++) {
+                            asteroids.push(
+                                new Asteroid(asteroid.x, asteroid.y, newRadius, asteroid.level + 1, asteroid.color)
+                            );
+                        }
+                    }
+
+                    asteroids.splice(aIndex, 1);
+                }
+            });
+        });
+
+        // Blobs and asteroids collision
+        blobs.forEach((blob) => {
+            asteroids.forEach((asteroid) => {
+                if (
+                    distanceBetweenPoints(blob.x, blob.y, asteroid.x, asteroid.y) <
+                    blob.radius + asteroid.radius
+                ) {
+                    // Change asteroid's direction based on blob's direction
+                    let angle = Math.atan2(asteroid.y - blob.y, asteroid.x - blob.x);
+                    asteroid.vx = Math.cos(angle) * asteroid.speed;
+                    asteroid.vy = Math.sin(angle) * asteroid.speed;
+                }
+            });
+        });
+
+        // Blobs and bullets collision (blobs cannot be destroyed, so nothing happens)
+
+        // Optionally, Enemy Ships and Asteroids collision
+        // enemyShips.forEach((enemyShip, esIndex) => {
+        //     asteroids.forEach((asteroid, aIndex) => {
+        //         if (
+        //             distanceBetweenPoints(enemyShip.x, enemyShip.y, asteroid.x, asteroid.y) <
+        //             enemyShip.radius + asteroid.radius
+        //         ) {
+        //             // Handle collision (e.g., destroy asteroid and enemy ship)
+        //             asteroids.splice(aIndex, 1);
+        //             enemyShips.splice(esIndex, 1);
+        //         }
+        //     });
+        // });
+
+        // Check if all asteroids and enemy ships are destroyed
+        if (asteroids.length === 0 && explosions.length === 0 && enemyShips.length === 0 && !shipDestroyed) {
+            // Stop ambient sound
+            ambientSound.pause();
+
+            round++;
+            if (round > stories.length) {
+                round = 1; // Reset to round 1 if stories are exhausted
+            }
             inStoryMode = true;
             currentStoryPage = 0;
+            storyTextDiv.style.display = 'block';
+            canvas.style.display = 'none';
             displayStory();
-
-            // Event listeners
-            document.addEventListener('keydown', keyDown);
-            document.addEventListener('keyup', keyUp);
-
-            // Start game loop
-            gameLoop();
-        }
-
-        // Function to create asteroids based on round
-        function createAsteroids(num) {
-            for (let i = 0; i < num; i++) {
-                let x, y;
-                do {
-                    x = Math.random() * canvas.width;
-                    y = Math.random() * canvas.height;
-                } while (distanceBetweenPoints(ship.x, ship.y, x, y) < 100);
-
-                // Determine asteroid color
-                let color = CRT_GREEN; // Default color
-                const redAsteroidChance = 0.2; // 20% chance for red asteroid
-                if (Math.random() < redAsteroidChance) {
-                    color = CRT_RED;
-                }
-
-                asteroids.push(new Asteroid(x, y, 50, 1, color));
+            createAsteroids(round);
+            if (round >= enemyShipStartRound) {
+                createEnemyShips(2); // Spawn enemy ships in the new round if applicable
+            }
+            if (round > 5) {
+                createBlobs(7 - round);
             }
         }
+    }
 
-        // Function to create blobs based on round
-        function createBlobs(num) {
-            for (let i = 0; i < num; i++) {
-                let x, y;
-                do {
-                    x = Math.random() * canvas.width;
-                    y = Math.random() * canvas.height;
-                } while (distanceBetweenPoints(ship.x, ship.y, x, y) < 100);
-                blobs.push(new Blob(x, y, 15)); // Radius 15 for visibility
+    function draw() {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw round number
+        ctx.fillStyle = CRT_GREEN;
+        ctx.font = '20px Courier New';
+        ctx.fillText('Round: ' + round, 20, 30);
+
+        // Draw ship
+        ship.draw();
+
+        // Draw bullets
+        bullets.forEach((bullet) => {
+            bullet.draw();
+        });
+
+        // Draw enemy bullets
+        enemyBullets.forEach((enemyBullet) => {
+            enemyBullet.draw();
+        });
+
+        // Draw asteroids
+        asteroids.forEach((asteroid) => {
+            asteroid.draw();
+        });
+
+        // Draw enemy ships
+        enemyShips.forEach((enemyShip) => {
+            enemyShip.draw();
+        });
+
+        // Draw blobs
+        blobs.forEach((blob) => {
+            blob.draw();
+        });
+
+        // Draw explosions
+        explosions.forEach((explosion) => {
+            explosion.draw();
+        });
+    }
+
+    function keyDown(e) {
+        keys[e.key] = true;
+
+        if (inStoryMode) {
+            if (e.key === ' ') {
+                displayStory();
             }
-        }
 
-        // Function to display the story
-        function displayStory() {
-            if (currentStoryPage === 0) {
-                storyTextDiv.innerHTML = ''; // Clear previous story content
-                storyTextDiv.style.display = 'block'; // Ensure story text is visible
-                storyInstructionsDiv.style.display = 'block'; // Show instructions
-            }
-
-            if (stories[round - 1] && stories[round - 1][currentStoryPage]) {
-                // Create a new div for the story line
-                const lineDiv = document.createElement('div');
-                lineDiv.textContent = stories[round - 1][currentStoryPage];
-                storyTextDiv.appendChild(lineDiv);
-                currentStoryPage++;
-            } else {
-                // No more story pages, start the round
+            if (e.key.toLowerCase() === 's') {
+                // Skip the story and start the round
                 inStoryMode = false;
                 storyTextDiv.style.display = 'none';
-                storyInstructionsDiv.style.display = 'none'; // Hide instructions
+                storyInstructionsDiv.style.display = 'none';
                 canvas.style.display = 'block';
 
                 // Play ambient sound
@@ -548,342 +1001,112 @@
                     console.error("Ambient sound playback failed:", error);
                 });
             }
-        }
 
-        // Game loop
-        function gameLoop() {
-            if (!inStoryMode) {
-                // Update
-                update();
-
-                // Draw
-                draw();
+            // Prevent default behavior for spacebar and 's' key
+            if (e.key === ' ' || e.key.toLowerCase() === 's') {
+                e.preventDefault();
             }
 
-            // Loop
-            requestAnimationFrame(gameLoop);
-        }
+        } else if (ship.alive) {
+            // Shoot bullet
+            if (e.key === ' ') {
+                bullets.push(new Bullet(ship.x, ship.y, ship.angle));
 
-        function update() {
-            ship.update();
-
-            // Rotate ship
-            if (ship.alive) {
-                if (keys['ArrowLeft']) {
-                    ship.rotation = -0.05;
-                } else if (keys['ArrowRight']) {
-                    ship.rotation = 0.05;
-                } else {
-                    ship.rotation = 0;
-                }
-            } else {
-                ship.rotation = 0;
-            }
-
-            // Bullets
-            bullets.forEach((bullet, index) => {
-                bullet.update();
-                if (bullet.life > bullet.maxLife) {
-                    bullets.splice(index, 1);
-                }
-            });
-
-            // Asteroids
-            asteroids.forEach((asteroid) => {
-                asteroid.update();
-            });
-
-            // Blobs
-            blobs.forEach((blob) => {
-                blob.update();
-            });
-
-            // Enemy Bullets
-            enemyBullets.forEach((enemyBullet, index) => {
-                enemyBullet.update();
-                if (enemyBullet.life > enemyBullet.maxLife) {
-                    enemyBullets.splice(index, 1);
-                }
-            });
-
-            // Explosions
-            explosions.forEach((explosion, index) => {
-                explosion.update();
-                if (explosion.life > explosion.maxLife) {
-                    explosions.splice(index, 1);
-                }
-            });
-
-            // Collision detection
-            if (ship.alive) {
-                // Ship collision with asteroids
-                asteroids.forEach((asteroid, aIndex) => {
-                    if (
-                        distanceBetweenPoints(ship.x, ship.y, asteroid.x, asteroid.y) <
-                        ship.radius + asteroid.radius
-                    ) {
-                        handleShipDestruction();
-                    }
-                });
-
-                // Ship collision with blobs
-                blobs.forEach((blob) => {
-                    if (
-                        distanceBetweenPoints(ship.x, ship.y, blob.x, blob.y) <
-                        ship.radius + blob.radius
-                    ) {
-                        handleShipDestruction();
-                    }
-                });
-
-                // Ship collision with enemy bullets
-                enemyBullets.forEach((enemyBullet, ebIndex) => {
-                    if (
-                        distanceBetweenPoints(ship.x, ship.y, enemyBullet.x, enemyBullet.y) <
-                        ship.radius + enemyBullet.radius
-                    ) {
-                        // Destroy the ship
-                        handleShipDestruction();
-
-                        // Remove the enemy bullet
-                        enemyBullets.splice(ebIndex, 1);
-                    }
+                // Play laser sound
+                laserSound.currentTime = 0;
+                laserSound.play().catch(error => {
+                    console.error("Laser sound playback failed:", error);
                 });
             }
 
-            // Bullets and asteroids collision
-            bullets.forEach((bullet, bIndex) => {
-                asteroids.forEach((asteroid, aIndex) => {
-                    if (
-                        distanceBetweenPoints(bullet.x, bullet.y, asteroid.x, asteroid.y) <
-                        asteroid.radius
-                    ) {
-                        bullets.splice(bIndex, 1);
-
-                        // Play explosion sound
-                        explosionSound.currentTime = 0;
-                        explosionSound.play().catch(error => {
-                            console.error("Explosion sound playback failed:", error);
-                        });
-
-                        // Create explosion
-                        createExplosion(asteroid.x, asteroid.y, asteroid.radius);
-
-                        // Split asteroid
-                        if (asteroid.level < 3) {
-                            let newRadius = asteroid.radius / 2;
-                            for (let i = 0; i < 2; i++) {
-                                asteroids.push(
-                                    new Asteroid(asteroid.x, asteroid.y, newRadius, asteroid.level + 1, asteroid.color)
-                                );
-                            }
-                        }
-
-                        asteroids.splice(aIndex, 1);
-                    }
-                });
-            });
-
-            // Blobs and asteroids collision
-            blobs.forEach((blob) => {
-                asteroids.forEach((asteroid) => {
-                    if (
-                        distanceBetweenPoints(blob.x, blob.y, asteroid.x, asteroid.y) <
-                        blob.radius + asteroid.radius
-                    ) {
-                        // Change asteroid's direction based on blob's direction
-                        let angle = Math.atan2(asteroid.y - blob.y, asteroid.x - blob.x);
-                        asteroid.vx = Math.cos(angle) * asteroid.speed;
-                        asteroid.vy = Math.sin(angle) * asteroid.speed;
-                    }
-                });
-            });
-
-            // Blobs and bullets collision (blobs cannot be destroyed, so nothing happens)
-
-            // Check if all asteroids are destroyed
-            if (asteroids.length === 0 && explosions.length === 0 && !shipDestroyed) {
-                // Stop ambient sound
-                ambientSound.pause();
-
-                round++;
-                if (round > stories.length) {
-                    round = 1; // Reset to round 1 if stories are exhausted
-                }
-                inStoryMode = true;
-                currentStoryPage = 0;
-                storyTextDiv.style.display = 'block';
-                canvas.style.display = 'none';
-                displayStory();
-                createAsteroids(round);
-                if (round > 5) {
-                    createBlobs(7 - round);
-                }
-            }
-        }
-
-        function draw() {
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw round number
-            ctx.fillStyle = CRT_GREEN;
-            ctx.font = '20px Courier New';
-            ctx.fillText('Round: ' + round, 20, 30);
-
-            // Draw ship
-            ship.draw();
-
-            // Draw bullets
-            bullets.forEach((bullet) => {
-                bullet.draw();
-            });
-
-            // Draw enemy bullets
-            enemyBullets.forEach((enemyBullet) => {
-                enemyBullet.draw();
-            });
-
-            // Draw asteroids
-            asteroids.forEach((asteroid) => {
-                asteroid.draw();
-            });
-
-            // Draw blobs
-            blobs.forEach((blob) => {
-                blob.draw();
-            });
-
-            // Draw explosions
-            explosions.forEach((explosion) => {
-                explosion.draw();
-            });
-        }
-
-        function keyDown(e) {
-            keys[e.key] = true;
-
-            if (inStoryMode) {
-                if (e.key === ' ') {
-                    displayStory();
-                }
-
-                if (e.key.toLowerCase() === 's') {
-                    // Skip the story and start the round
-                    inStoryMode = false;
-                    storyTextDiv.style.display = 'none';
-                    storyInstructionsDiv.style.display = 'none';
-                    canvas.style.display = 'block';
-
-                    // Play ambient sound
-                    ambientSound.currentTime = 0;
-                    ambientSound.play().catch(error => {
-                        console.error("Ambient sound playback failed:", error);
+            // Play ship bridge sound only when rotating
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                // To prevent multiple sounds from overlapping, check if the sound is already playing
+                if (bridgeSound.paused) {
+                    bridgeSound.currentTime = 0;
+                    bridgeSound.play().catch(error => {
+                        console.error("Bridge sound playback failed:", error);
                     });
                 }
+            }
 
-                // Prevent default behavior for spacebar and 's' key
-                if (e.key === ' ' || e.key.toLowerCase() === 's') {
-                    e.preventDefault();
-                }
-
-            } else if (ship.alive) {
-                // Shoot bullet
-                if (e.key === ' ') {
-                    bullets.push(new Bullet(ship.x, ship.y, ship.angle));
-
-                    // Play laser sound
-                    laserSound.currentTime = 0;
-                    laserSound.play().catch(error => {
-                        console.error("Laser sound playback failed:", error);
-                    });
-                }
-
-                // Play ship bridge sound only when rotating
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                    // To prevent multiple sounds from overlapping, check if the sound is already playing
-                    if (bridgeSound.paused) {
-                        bridgeSound.currentTime = 0;
-                        bridgeSound.play().catch(error => {
-                            console.error("Bridge sound playback failed:", error);
-                        });
-                    }
-                }
-
-                // Prevent default behavior for arrow keys and spacebar
-                if (['ArrowLeft', 'ArrowRight', 'ArrowUp', ' '].includes(e.key)) {
-                    e.preventDefault();
-                }
+            // Prevent default behavior for arrow keys and spacebar
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', ' '].includes(e.key)) {
+                e.preventDefault();
             }
         }
+    }
 
-        function keyUp(e) {
-            keys[e.key] = false;
+    function keyUp(e) {
+        keys[e.key] = false;
+    }
+
+    function distanceBetweenPoints(x1, y1, x2, y2) {
+        return Math.hypot(x1 - x2, y1 - y2);
+    }
+
+    // Function to create an explosion at a given position
+    function createExplosion(x, y, radius) {
+        let numParticles = 20;
+        let colors = [CRT_GREEN, '#00CC00', '#009900']; // Shades of green
+        for (let i = 0; i < numParticles; i++) {
+            let color = colors[Math.floor(Math.random() * colors.length)];
+            explosions.push(new Particle(x, y, color));
         }
+    }
 
-        function distanceBetweenPoints(x1, y1, x2, y2) {
-            return Math.hypot(x1 - x2, y1 - y2);
-        }
+    // Function to handle ship destruction
+    function handleShipDestruction() {
+        ship.alive = false;
+        shipDestroyed = true;
 
-        // Function to create an explosion at a given position
-        function createExplosion(x, y, radius) {
-            let numParticles = 20;
-            let colors = [CRT_GREEN, '#00CC00', '#009900']; // Shades of green
-            for (let i = 0; i < numParticles; i++) {
-                let color = colors[Math.floor(Math.random() * colors.length)];
-                explosions.push(new Particle(x, y, color));
-            }
-        }
+        // Stop ambient sound
+        ambientSound.pause();
 
-        // Function to handle ship destruction
-        function handleShipDestruction() {
-            ship.alive = false;
-            shipDestroyed = true;
-
-            // Stop ambient sound
-            ambientSound.pause();
-
-            // Play ship explosion sound
-            shipExplosionSound.currentTime = 0;
-            shipExplosionSound.play().catch(error => {
-                console.error("Ship explosion sound playback failed:", error);
-            });
-
-            // Create explosion at ship's position
-            createExplosion(ship.x, ship.y, ship.radius);
-
-            // Set timeout to reset the game after 5 seconds
-            setTimeout(() => {
-                resetGame();
-            }, 5000);
-        }
-
-        // Function to reset the game after ship destruction
-        function resetGame() {
-            ship = new Ship();
-            shipDestroyed = false;
-            asteroids = [];
-            bullets = [];
-            enemyBullets = []; // Clear enemy bullets
-            explosions = [];
-            blobs = []; // Clear existing blobs
-            round = 1;
-            inStoryMode = true;
-            currentStoryPage = 0;
-            storyTextDiv.style.display = 'block';
-            canvas.style.display = 'none';
-            displayStory();
-            createAsteroids(round);
-            if (round > 5) {
-                createBlobs(7 - round);
-            }
-        }
-
-        // Start the game after the window has fully loaded
-        window.addEventListener('load', () => {
-            init();
+        // Play ship explosion sound
+        shipExplosionSound.currentTime = 0;
+        shipExplosionSound.play().catch(error => {
+            console.error("Ship explosion sound playback failed:", error);
         });
-    </script>
-</div>
+
+        // Create explosion at ship's position
+        createExplosion(ship.x, ship.y, ship.radius);
+
+        // Set timeout to reset the game after 5 seconds
+        setTimeout(() => {
+            resetGame();
+        }, 5000);
+    }
+
+    // Function to reset the game after ship destruction
+    function resetGame() {
+        ship = new Ship();
+        shipDestroyed = false;
+        asteroids = [];
+        bullets = [];
+        enemyShips = []; // Clear enemy ships
+        enemyBullets = []; // Clear enemy bullets
+        explosions = [];
+        blobs = []; // Clear existing blobs
+        round = 1;
+        inStoryMode = true;
+        currentStoryPage = 0;
+        storyTextDiv.style.display = 'block';
+        canvas.style.display = 'none';
+        displayStory();
+        createAsteroids(round);
+        if (round >= enemyShipStartRound) {
+            createEnemyShips(2); // Spawn enemy ships in the reset round if applicable
+        }
+        if (round > 5) {
+            createBlobs(7 - round);
+        }
+    }
+
+    // Start the game after the window has fully loaded
+    window.addEventListener('load', () => {
+        init();
+    });
+</script>
 </body>
 </html>
