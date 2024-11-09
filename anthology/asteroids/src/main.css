@@ -1,0 +1,58 @@
+/* Importing Google Fonts - Press Start 2P for a retro 80s vibe */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+/* Overall page styling */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    background-color: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: 'Press Start 2P', sans-serif;
+    color: #00FF00; /* CRT Green */
+    text-align: center;
+}
+
+/* Canvas styling */
+canvas {
+    background-color: #000;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Story text styling */
+#storyText {
+    max-width: 800px;
+    margin: 20px auto;
+    line-height: 1.5;
+    color: #00FF00; /* CRT Green */
+    white-space: pre-wrap; /* Preserves whitespace and line breaks */
+}
+
+/* Story instructions styling */
+#storyInstructions {
+    margin-top: 20px;
+    color: #00FF00; /* CRT Green */
+    font-size: 18px;
+}
+
+/* Additional styling for the container */
+.game-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Flicker effect for story */
+.flicker {
+    animation: flicker 1.5s infinite alternate;
+}
+
+@keyframes flicker {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
