@@ -13,26 +13,30 @@ class Ship {
         this.acceleration = 0.1;
         this.friction = 0.99;
         this.alive = true;
-
+        this.thrusters = false;
         // Energy properties for Smart Bomb
         this.energy = 100; // Energy level starts at 100%
         this.maxEnergy = 100; // Maximum energy level
         this.energyRechargeRate = this.maxEnergy / (10 * 60); // Energy recharges over 10 seconds at 60 FPS
     }
-
+    applyThrust(){
+        this.thrust.x += this.acceleration * Math.cos(this.angle);
+        this.thrust.y += this.acceleration * Math.sin(this.angle);
+    }
+    applyFriction(){
+        this.thrust.x *= this.friction;
+        this.thrust.y *= this.friction;
+    }
     update() {
         if (this.alive) {
             // Rotate ship
             this.angle += this.rotation;
 
             // Move ship
-            if (keys['ArrowUp']) {
-                this.thrust.x += this.acceleration * Math.cos(this.angle);
-                this.thrust.y += this.acceleration * Math.sin(this.angle);
+            if (this.thrusters) {
+              this.applyThrust()
             } else {
-                // Apply friction
-                this.thrust.x *= this.friction;
-                this.thrust.y *= this.friction;
+                this.applyFriction()
             }
 
             this.x += this.thrust.x;
@@ -43,6 +47,7 @@ class Ship {
             if (this.x > canvas.width) this.x = 0;
             if (this.y < 0) this.y = canvas.height;
             if (this.y > canvas.height) this.y = 0;
+
 
             // Update energy level
             this.updateEnergy();
@@ -63,7 +68,7 @@ class Ship {
             ctx.beginPath();
             ctx.moveTo(frontX, frontY);
             ctx.lineTo(rightX, rightY);
-            ctx.strokeStyle = CRT_BLUE;
+            ctx.strokeStyle = CRT_AMBER;
             ctx.stroke();
 
             // Right back line (right back point to left back point) - CRT_GREEN
@@ -77,7 +82,7 @@ class Ship {
             ctx.beginPath();
             ctx.moveTo(leftX, leftY);
             ctx.lineTo(frontX, frontY);
-            ctx.strokeStyle = CRT_BLUE;
+            ctx.strokeStyle = CRT_AMBER;
             ctx.stroke();
 
             // Draw energy bar
@@ -132,7 +137,7 @@ class Bullet {
         this.angle = angle;
         this.speed = 5;
         this.radius = 2;
-        this.color = CRT_BLUE;
+        this.color = CRT_AMBER;
         this.life = 0;
         this.maxLife = 60;
     }
