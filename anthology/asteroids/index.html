@@ -1,27 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Asteroids Game with Enemy Ships and Smart Bomb</title>
+    <title>The Adventures of Buckaroo Jack</title>
     <link rel="stylesheet" href="./src/main.css">
 </head>
 <body>
-
-
-
-
-
 <div class="game-container">
-    <h1>Asteroids Game</h1>
-
-
-
+    <h1>The Adventures of Buckaroo Jack</h1>
     <div id="storyText">
-        <!-- Story content will be injected here -->
         <div id="storyInstructions">[ Press Spacebar ] [ S to Skip ]</div>
     </div>
     <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
-
-    <!-- Include audio elements -->
+    <!-- Audio elements unchanged -->
     <audio id="ambientSound" loop>
         <source src="../../public/s/ambient.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -42,12 +32,10 @@
         <source src="../../public/s/bridge.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
-    <!-- Optional: Enemy ship shooting sound -->
     <audio id="enemyLaserSound">
         <source src="../../public/s/enemy-laser.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
-    <!-- New audio for Smart Bomb activation -->
     <audio id="smartBombSound">
         <source src="../../public/s/smart_bomb.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
@@ -55,15 +43,26 @@
 </div>
 
 <script src="src/stories.js"></script>
-<script src="src/asteroid.js"></script>
 <script src="src/ship.js"></script>
+<script src="src/asteroid.js"></script>
 <script src="src/enemy.js"></script>
-<script src="src/particle.js"></script>
 <script src="src/blob.js"></script>
+<script src="src/particle.js"></script>
 <script src="src/main.js"></script>
 
-
+<script>
+    let gameConfig;
+    fetch('./src/config.json')
+        .then(response => response.json())
+        .then(config => {
+            gameConfig = config;
+            startGame(gameConfig);
+        })
+        .catch(error => {
+            console.error('Error loading config:', error);
+            gameConfig = {};
+            startGame(gameConfig);
+        });
+</script>
 </body>
 </html>
-
-
