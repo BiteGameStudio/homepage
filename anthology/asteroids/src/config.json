@@ -1,0 +1,77 @@
+{
+  "colors": {
+    "crtGreen": "#00FF00",
+    "crtRed": "#FF0000",
+    "crtPurple": "#FF00FF",
+    "crtAmber": "#FFBF00",
+    "crtBlue": "#00BFFF",
+    "crtYellow": "#FFFF00",
+    "felMagicGreen": "#00FF00"
+  },
+  "ship": {
+    "radius": 15,
+    "acceleration": 0.1,
+    "friction": 0.99,
+    "energy": {
+      "initial": 100,
+      "max": 100,
+      "rechargeRateSeconds": 10,
+      "bulletCost": 2
+    },
+    "smartBomb": {
+      "maxRadius": 150,
+      "expansionRate": 5
+    },
+    "shield": {
+      "energyDrainPerSecond": 0.01
+    }
+  },
+  "asteroids": {
+    "baseCountPerLevel": 1,
+    "maxLevels": 3,
+    "initialRadius": 50,
+    "speedMin": 0.5,
+    "speedMax": 2.0,
+    "redAsteroidChance": 0.01,
+    "blueAsteroidChance": 0.5,
+    "shootIntervalMin": 100,
+    "shootIntervalMax": 300
+  },
+  "enemyShips": {
+    "startRound": 3,
+    "maxCount": 5,
+    "radius": 20,
+    "speedMin": 0.5,
+    "speedMax": 1.5,
+    "shootIntervalMin": 200,
+    "shootIntervalMax": 500
+  },
+  "blobs": {
+    "startRound": 6,
+    "radius": 15,
+    "speedMin": 1,
+    "speedMax": 3
+  },
+  "bullets": {
+    "speed": 5,
+    "radius": 2,
+    "maxLife": 60
+  },
+  "enemyBullets": {
+    "speed": 4,
+    "radius": 3,
+    "maxLife": 120
+  },
+  "particles": {
+    "radiusMin": 1,
+    "radiusMax": 3,
+    "speedMin": 1,
+    "speedMax": 3,
+    "maxLife": 50
+  },
+  "game": {
+    "canvasWidth": 800,
+    "canvasHeight": 600,
+    "initialRound": 1
+  }
+}
