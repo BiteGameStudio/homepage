@@ -23,7 +23,7 @@
       "expansionRate": 5
     },
     "shield": {
-      "energyDrainPerSecond": 0.01
+      "energyDrainPerSecond": 5
     }
   },
   "asteroids": {
@@ -32,8 +32,8 @@
     "initialRadius": 50,
     "speedMin": 0.5,
     "speedMax": 2.0,
-    "redAsteroidChance": 0.1,
-    "blueAsteroidChance": 0.1,
+    "redAsteroidChance": 0.01,
+    "blueAsteroidChance": 0.5,
     "shootIntervalMin": 100,
     "shootIntervalMax": 300
   },
@@ -73,5 +73,21 @@
     "canvasWidth": 800,
     "canvasHeight": 600,
     "initialRound": 1
+  },
+  "scoring": {
+    "asteroids": {
+      "basePoints": {
+        "level1": 1,
+        "level2": 2,
+        "level3": 3
+      },
+      "colorBonus": {
+        "green": 0,
+        "blue": 10,
+        "red": 5,
+        "bigRed": 100
+      }
+    },
+    "enemyShip": 15
   }
 }

@@ -53,12 +53,12 @@ class Game {
         this.inStoryMode = true;
         this.currentStoryPage = 0;
         this.shipDestroyed = false;
-
-        this.init();
+        this.score = 0;
     }
 
     init() {
         this.shipDestroyed = false;
+        this.score = 0;
         this.createAsteroids(this.config.game.initialRound);
         if (this.config.game.initialRound >= this.config.blobs.startRound) {
             this.createBlobs(this.config.game.initialRound % 2);
@@ -226,7 +226,6 @@ class Game {
                 }
             }
 
-            // Affect enemy ships
             this.enemyShips.forEach(enemyShip => {
                 if (!enemyShip.empDisabled) {
                     const distance = this.distanceBetweenPoints(enemyShip.x, enemyShip.y, empBlast.x, empBlast.y);
@@ -236,7 +235,6 @@ class Game {
                 }
             });
 
-            // Affect red asteroids
             this.asteroids.forEach(asteroid => {
                 if (asteroid.isRed && !asteroid.empDisabled) {
                     const distance = this.distanceBetweenPoints(asteroid.x, asteroid.y, empBlast.x, empBlast.y);
@@ -332,9 +330,10 @@ class Game {
 
     draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = this.config.colors.crtGreen;
-        this.ctx.font = '20px Courier New';
-        this.ctx.fillText('Level: ' + this.config.game.initialRound, 20, 30);
+        this.ctx.fillStyle = 'white'; // White for better visibility
+        this.ctx.font = '24px "Press Start 2P"'; // Larger retro font (ensure CSS import in index.html)
+        this.ctx.fillText('Level: ' + this.config.game.initialRound, 20, 40);
+        this.ctx.fillText('Score: ' + this.score, 20, 80); // Adjusted position
         this.player1.draw();
         this.bullets.forEach(bullet => bullet.draw());
         this.asteroids.forEach(asteroid => {
@@ -379,6 +378,28 @@ class Game {
         this.explosionSound.currentTime = 0;
         this.explosionSound.play().catch(error => console.error("Explosion sound playback failed:", error));
         this.createExplosion(asteroid.x, asteroid.y, asteroid.radius, asteroid.color);
+
+        // Calculate score from config
+        let basePoints = 0;
+        switch (asteroid.level) {
+            case 1: basePoints = this.config.scoring.asteroids.basePoints.level1; break;
+            case 2: basePoints = this.config.scoring.asteroids.basePoints.level2; break;
+            case 3: basePoints = this.config.scoring.asteroids.basePoints.level3; break;
+        }
+        let bonusPoints = 0;
+        if (asteroid.isBlue) {
+            bonusPoints += this.config.scoring.asteroids.colorBonus.blue;
+        } else if (asteroid.isRed) {
+            bonusPoints += this.config.scoring.asteroids.colorBonus.red;
+            if (asteroid.level === 1) {
+                bonusPoints += this.config.scoring.asteroids.colorBonus.bigRed;
+            }
+        } else {
+            bonusPoints += this.config.scoring.asteroids.colorBonus.green;
+        }
+        this.score += basePoints + bonusPoints;
+        console.log(`Asteroid destroyed: Level ${asteroid.level}, Color ${asteroid.color}, Points ${basePoints + bonusPoints} (Base: ${basePoints}, Bonus: ${bonusPoints})`);
+
         if (asteroid.shouldTriggerEMP()) {
             this.empBlasts.push(new EMPBlast(asteroid.x, asteroid.y, asteroid.level, this.config));
         }
@@ -396,11 +417,14 @@ class Game {
         this.createExplosion(x, y, this.config.enemyShips.radius, this.config.colors.crtRed);
         this.explosionSound.currentTime = 0;
         this.explosionSound.play().catch(error => console.error("Explosion sound playback failed:", error));
+        this.score += this.config.scoring.enemyShip; // Use config value
+        console.log(`Enemy Ship destroyed: +${this.config.scoring.enemyShip} points`);
     }
 
     resetGame() {
         this.player1 = new Ship(this.config);
         this.shipDestroyed = false;
+        this.score = 0;
         this.asteroids = [];
         this.bullets = [];
         this.enemyShips = [];
