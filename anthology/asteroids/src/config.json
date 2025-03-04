@@ -32,8 +32,8 @@
     "initialRadius": 50,
     "speedMin": 0.5,
     "speedMax": 2.0,
-    "redAsteroidChance": 0.01,
-    "blueAsteroidChance": 0.5,
+    "redAsteroidChance": 0.1,
+    "blueAsteroidChance": 0.1,
     "shootIntervalMin": 100,
     "shootIntervalMax": 300
   },

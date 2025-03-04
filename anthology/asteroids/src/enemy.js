@@ -46,6 +46,12 @@ class EnemyShip {
         this.shootInterval = Math.floor(Math.random() * (this.config.enemyShips?.shootIntervalMax - this.config.enemyShips?.shootIntervalMin || 300) + (this.config.enemyShips?.shootIntervalMin || 200));
         this.shootTimer = 0;
         this.enemyBullets = [];
+
+        // EMP effect
+        this.empDisabled = false;
+        this.empRechargeTime = 0; // Frames remaining until re-enabled
+        this.defaultColor = this.color;
+        this.disabledColor = '#808080'; // Grey when disabled
     }
 
     update(ship) {
@@ -58,23 +64,37 @@ class EnemyShip {
         if (this.y < -this.radius) this.y = canvasHeight + this.radius;
         if (this.y > canvasHeight + this.radius) this.y = -this.radius;
 
-        this.shootTimer++;
-        if (this.shootTimer >= this.shootInterval) {
-            this.shoot(ship);
-            this.shootTimer = 0;
-            this.shootInterval = Math.floor(Math.random() * (this.config.enemyShips?.shootIntervalMax - this.config.enemyShips?.shootIntervalMin || 300) + (this.config.enemyShips?.shootIntervalMin || 200));
+        if (this.empDisabled) {
+            this.empRechargeTime--;
+            this.color = this.disabledColor;
+            if (this.empRechargeTime <= 0) {
+                this.empDisabled = false;
+                this.color = this.defaultColor;
+                console.log(`EnemyShip at (${this.x}, ${this.y}) recharged`);
+            }
+        } else {
+            this.shootTimer++;
+            if (this.shootTimer >= this.shootInterval) {
+                this.shoot(ship);
+                this.shootTimer = 0;
+                this.shootInterval = Math.floor(Math.random() * (this.config.enemyShips?.shootIntervalMax - this.config.enemyShips?.shootIntervalMin || 300) + (this.config.enemyShips?.shootIntervalMin || 200));
+            }
         }
     }
 
     shoot(ship) {
-        // Corrected to use this.x and this.y for bullet starting position
         const angleToPlayer = Math.atan2(ship.y - this.y, ship.x - this.x);
         this.enemyBullets.push(new EnemyBullet(this.x, this.y, angleToPlayer, this.config));
-        // Play enemy shooting sound
         if (enemyLaserSound) {
             enemyLaserSound.currentTime = 0;
             enemyLaserSound.play().catch(error => console.error("Enemy laser sound playback failed:", error));
         }
+    }
+
+    disableByEMP() {
+        this.empDisabled = true;
+        this.empRechargeTime = 180; // 3 seconds at 60 FPS
+        console.log(`EnemyShip at (${this.x}, ${this.y}) disabled by EMP`);
     }
 
     draw() {

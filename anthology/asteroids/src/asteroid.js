@@ -56,7 +56,14 @@ class Asteroid {
         this.textSpeed = 0.5;
 
         this.isBlue = this.color === (this.config.colors?.crtBlue || CRT_BLUE || '#00BFFF');
-        console.log(`Asteroid created at (${this.x}, ${this.y}): Color ${this.color}, Is Blue? ${this.isBlue}`);
+        this.isRed = this.color === (this.config.colors?.crtRed || CRT_RED || '#FF0000');
+        console.log(`Asteroid created at (${this.x}, ${this.y}): Color ${this.color}, Is Blue? ${this.isBlue}, Is Red? ${this.isRed}`);
+
+        // EMP effect for red asteroids
+        this.empDisabled = false;
+        this.empRechargeTime = 0;
+        this.defaultColor = this.color;
+        this.disabledColor = '#808080';
     }
 
     update(ship) {
@@ -69,7 +76,15 @@ class Asteroid {
         if (this.y < -this.radius) this.y = canvasHeight + this.radius;
         if (this.y > canvasHeight + this.radius) this.y = -this.radius;
 
-        if (this.config.game?.initialRound >= this.config.enemyShips?.startRound && this.color === (this.config?.colors?.crtRed || CRT_RED || '#FF0000')) {
+        if (this.empDisabled) {
+            this.empRechargeTime--;
+            this.color = this.disabledColor;
+            if (this.empRechargeTime <= 0) {
+                this.empDisabled = false;
+                this.color = this.defaultColor;
+                console.log(`Red Asteroid at (${this.x}, ${this.y}) recharged`);
+            }
+        } else if (this.isRed && this.config.game?.initialRound >= this.config.enemyShips?.startRound) {
             this.shootTimer++;
             if (this.shootTimer >= this.shootInterval) {
                 this.shoot(ship);
@@ -78,7 +93,7 @@ class Asteroid {
             }
         }
 
-        if (this.level === 1 && this.color === (this.config?.colors?.crtBlue || CRT_BLUE || '#00BFFF')) {
+        if (this.level === 1 && this.isBlue) {
             this.textPosition += this.textSpeed;
             if (this.textPosition > this.radius * 2) this.textPosition = -ctx.measureText('advertise').width;
         }
@@ -99,7 +114,15 @@ class Asteroid {
     }
 
     shouldTriggerEMP() {
-        return this.isBlue; // Return true if blue for EMP triggering
+        return this.isBlue;
+    }
+
+    disableByEMP() {
+        if (this.isRed) {
+            this.empDisabled = true;
+            this.empRechargeTime = 180; // 3 seconds at 60 FPS
+            console.log(`Red Asteroid at (${this.x}, ${this.y}) disabled by EMP`);
+        }
     }
 
     draw() {
@@ -119,7 +142,7 @@ class Asteroid {
 
         this.bullets.forEach(bullet => bullet.draw());
 
-        if (this.level === 1 && this.color === (this.config?.colors?.crtBlue || CRT_BLUE || '#00BFFF')) {
+        if (this.level === 1 && this.isBlue) {
             ctx.save();
             ctx.translate(this.x, this.y);
             ctx.font = '12px Arial';
@@ -146,7 +169,6 @@ class Asteroid {
     }
 }
 
-// New EMPBlast class
 class EMPBlast {
     constructor(x, y, level, config) {
         this.x = x;
@@ -154,8 +176,8 @@ class EMPBlast {
         this.level = level;
         this.config = config || {};
         this.radius = 0;
-        this.maxRadius = 600; // Large fixed radius
-        this.expansionRate = 20; // Fast expansion
+        this.maxRadius = 600;
+        this.expansionRate = 20;
         this.active = true;
         console.log(`EMPBlast created at (${this.x}, ${this.y}), Level ${this.level}`);
     }

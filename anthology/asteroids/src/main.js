@@ -48,7 +48,7 @@ class Game {
         this.explosions = [];
         this.blobs = [];
         this.smartBombs = [];
-        this.empBlasts = []; // New array for EMP blasts
+        this.empBlasts = [];
 
         this.inStoryMode = true;
         this.currentStoryPage = 0;
@@ -195,18 +195,18 @@ class Game {
             if (!smartBomb.active) this.smartBombs.splice(sbIndex, 1);
         });
 
-        // Update EMP blasts
+        // Update EMP blasts and affect enemies
         this.empBlasts.forEach((empBlast, ebIndex) => {
             empBlast.update();
             if (!empBlast.active) {
                 this.empBlasts.splice(ebIndex, 1);
             }
             if (this.player1.alive) {
-                const distance = this.distanceBetweenPoints(this.player1.x, this.player1.y, empBlast.x, empBlast.y);
-                console.log(`EMPBlast check: Distance ${distance.toFixed(1)}, EMP Radius ${empBlast.radius.toFixed(1)}, Max Radius ${empBlast.maxRadius}`);
-                if (distance < empBlast.radius) {
+                const distanceToPlayer = this.distanceBetweenPoints(this.player1.x, this.player1.y, empBlast.x, empBlast.y);
+                console.log(`EMPBlast check (Player): Distance ${distanceToPlayer.toFixed(1)}, EMP Radius ${empBlast.radius.toFixed(1)}, Max Radius ${empBlast.maxRadius}`);
+                if (distanceToPlayer < empBlast.radius) {
                     const maxDistance = empBlast.maxRadius;
-                    const distanceFactor = Math.max(0, 1 - (distance / maxDistance));
+                    const distanceFactor = Math.max(0, 1 - (distanceToPlayer / maxDistance));
                     let baseDrain, minDrain;
                     if (empBlast.level === 1) {
                         baseDrain = 99;
@@ -221,10 +221,30 @@ class Game {
                     const drainPercentage = minDrain + (baseDrain - minDrain) * distanceFactor;
                     const energyDrain = (drainPercentage / 100) * this.player1.maxEnergy;
                     this.player1.energy = Math.max(0, this.player1.energy - energyDrain);
-                    console.log(`EMPBlast hit! Drained ${energyDrain.toFixed(1)} energy (Distance: ${distance.toFixed(1)}, Level: ${empBlast.level}, Factor: ${distanceFactor.toFixed(2)})`);
-                    empBlast.active = false; // One-time hit
+                    console.log(`EMPBlast hit Player! Drained ${energyDrain.toFixed(1)} energy (Distance: ${distanceToPlayer.toFixed(1)}, Level: ${empBlast.level}, Factor: ${distanceFactor.toFixed(2)})`);
+                    empBlast.active = false;
                 }
             }
+
+            // Affect enemy ships
+            this.enemyShips.forEach(enemyShip => {
+                if (!enemyShip.empDisabled) {
+                    const distance = this.distanceBetweenPoints(enemyShip.x, enemyShip.y, empBlast.x, empBlast.y);
+                    if (distance < empBlast.radius) {
+                        enemyShip.disableByEMP();
+                    }
+                }
+            });
+
+            // Affect red asteroids
+            this.asteroids.forEach(asteroid => {
+                if (asteroid.isRed && !asteroid.empDisabled) {
+                    const distance = this.distanceBetweenPoints(asteroid.x, asteroid.y, empBlast.x, empBlast.y);
+                    if (distance < empBlast.radius) {
+                        asteroid.disableByEMP();
+                    }
+                }
+            });
         });
 
         // Collision detection with shield protection
@@ -328,7 +348,7 @@ class Game {
         this.blobs.forEach(blob => blob.draw());
         this.explosions.forEach(explosion => explosion.draw());
         this.smartBombs.forEach(smartBomb => smartBomb.draw());
-        this.empBlasts.forEach(empBlast => empBlast.draw()); // Draw EMP blasts
+        this.empBlasts.forEach(empBlast => empBlast.draw());
     }
 
     distanceBetweenPoints(x1, y1, x2, y2) {
@@ -387,7 +407,7 @@ class Game {
         this.explosions = [];
         this.blobs = [];
         this.smartBombs = [];
-        this.empBlasts = []; // Reset EMP blasts
+        this.empBlasts = [];
         this.config.game.initialRound = 1;
         this.inStoryMode = true;
         this.currentStoryPage = 0;
