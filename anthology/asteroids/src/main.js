@@ -48,6 +48,7 @@ class Game {
         this.explosions = [];
         this.blobs = [];
         this.smartBombs = [];
+        this.empBlasts = []; // New array for EMP blasts
 
         this.inStoryMode = true;
         this.currentStoryPage = 0;
@@ -194,8 +195,40 @@ class Game {
             if (!smartBomb.active) this.smartBombs.splice(sbIndex, 1);
         });
 
+        // Update EMP blasts
+        this.empBlasts.forEach((empBlast, ebIndex) => {
+            empBlast.update();
+            if (!empBlast.active) {
+                this.empBlasts.splice(ebIndex, 1);
+            }
+            if (this.player1.alive) {
+                const distance = this.distanceBetweenPoints(this.player1.x, this.player1.y, empBlast.x, empBlast.y);
+                console.log(`EMPBlast check: Distance ${distance.toFixed(1)}, EMP Radius ${empBlast.radius.toFixed(1)}, Max Radius ${empBlast.maxRadius}`);
+                if (distance < empBlast.radius) {
+                    const maxDistance = empBlast.maxRadius;
+                    const distanceFactor = Math.max(0, 1 - (distance / maxDistance));
+                    let baseDrain, minDrain;
+                    if (empBlast.level === 1) {
+                        baseDrain = 99;
+                        minDrain = 30;
+                    } else if (empBlast.level === 3) {
+                        baseDrain = 40;
+                        minDrain = 10;
+                    } else {
+                        baseDrain = 69.5;
+                        minDrain = 20;
+                    }
+                    const drainPercentage = minDrain + (baseDrain - minDrain) * distanceFactor;
+                    const energyDrain = (drainPercentage / 100) * this.player1.maxEnergy;
+                    this.player1.energy = Math.max(0, this.player1.energy - energyDrain);
+                    console.log(`EMPBlast hit! Drained ${energyDrain.toFixed(1)} energy (Distance: ${distance.toFixed(1)}, Level: ${empBlast.level}, Factor: ${distanceFactor.toFixed(2)})`);
+                    empBlast.active = false; // One-time hit
+                }
+            }
+        });
+
         // Collision detection with shield protection
-        if (this.player1.alive && !this.player1.shieldActive) { // Only check damage if shield is off
+        if (this.player1.alive && !this.player1.shieldActive) {
             this.asteroids.forEach((asteroid, aIndex) => {
                 if (this.distanceBetweenPoints(this.player1.x, this.player1.y, asteroid.x, asteroid.y) < this.player1.radius + asteroid.radius) {
                     this.handleShipDestruction();
@@ -234,6 +267,7 @@ class Game {
             });
         }
 
+        // Player bullets vs. asteroids with EMP effect
         this.bullets.forEach((bullet, bIndex) => {
             this.asteroids.forEach((asteroid, aIndex) => {
                 if (this.distanceBetweenPoints(bullet.x, bullet.y, asteroid.x, asteroid.y) < bullet.radius + asteroid.radius) {
@@ -244,6 +278,7 @@ class Game {
             });
         });
 
+        // Player bullets vs. enemy ships
         this.bullets.forEach((bullet, bIndex) => {
             this.enemyShips.forEach((enemyShip, esIndex) => {
                 if (this.distanceBetweenPoints(bullet.x, bullet.y, enemyShip.x, enemyShip.y) < bullet.radius + enemyShip.radius) {
@@ -293,6 +328,7 @@ class Game {
         this.blobs.forEach(blob => blob.draw());
         this.explosions.forEach(explosion => explosion.draw());
         this.smartBombs.forEach(smartBomb => smartBomb.draw());
+        this.empBlasts.forEach(empBlast => empBlast.draw()); // Draw EMP blasts
     }
 
     distanceBetweenPoints(x1, y1, x2, y2) {
@@ -323,6 +359,9 @@ class Game {
         this.explosionSound.currentTime = 0;
         this.explosionSound.play().catch(error => console.error("Explosion sound playback failed:", error));
         this.createExplosion(asteroid.x, asteroid.y, asteroid.radius, asteroid.color);
+        if (asteroid.shouldTriggerEMP()) {
+            this.empBlasts.push(new EMPBlast(asteroid.x, asteroid.y, asteroid.level, this.config));
+        }
         if (asteroid.level < this.config.asteroids.maxLevels) {
             let newRadius = asteroid.radius / 2;
             for (let i = 0; i < 2; i++) {
@@ -348,6 +387,7 @@ class Game {
         this.explosions = [];
         this.blobs = [];
         this.smartBombs = [];
+        this.empBlasts = []; // Reset EMP blasts
         this.config.game.initialRound = 1;
         this.inStoryMode = true;
         this.currentStoryPage = 0;
@@ -412,7 +452,6 @@ function startGame(config) {
                     console.log("Smart Bomb not ready. Energy at " + Math.floor(g.player1.energy) + "%");
                 }
             }
-            // Add shield toggle with 'P' key
             if (e.key.toLowerCase() === 'p') {
                 e.preventDefault();
                 g.player1.toggleShield();
