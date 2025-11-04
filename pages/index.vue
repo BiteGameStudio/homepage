@@ -10,12 +10,12 @@
         </div>
 
         <div class="game-title">
-          <h1 class="glitch-text">SANITOR</h1>
+          <h1 class="glitch-text">NIGHTSHIFT</h1>
         </div>
 
         <div class="game-info">
           <p class="tagline">ORBITAL DEBRIS CLEARANCE PROTOCOL</p>
-          <p class="subtext">Hyperspace lanes require constant maintenance</p>
+          <p class="subtext">The hyperspace lanes won't clean themselves</p>
         </div>
 
         <div class="action-container">
