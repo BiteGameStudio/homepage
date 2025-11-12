@@ -9,7 +9,7 @@ import { onMounted, ref } from "vue";
 const starfield = ref(null);
 
 const generateStarfield = () => {
-  const starCount = 200; // Number of stars
+  const starCount = 100; // Reduced for calmer feel
   const starfieldDiv = starfield.value;
 
   for (let i = 0; i < starCount; i++) {
@@ -22,8 +22,8 @@ const generateStarfield = () => {
     star.style.left = `${x}%`;
     star.style.top = `${y}%`;
 
-    // Random twinkle duration between 2s and 5s
-    star.style.animationDuration = `${(Math.random() * 30 + 2)}s`;
+    // Slower, calmer twinkle
+    star.style.animationDuration = `${(Math.random() * 4 + 3)}s`;
 
     starfieldDiv.appendChild(star);
   }
@@ -35,7 +35,7 @@ onMounted(() => {
 });
 </script>
 
-<style  >
+<style scoped>
 
 .starfield {
   position: fixed;
@@ -43,26 +43,59 @@ onMounted(() => {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: black; /* Set background to black */
+  background: black;
+  z-index: 1;
+}
 
-  z-index: 1; /* Ensure it's behind other elements */
+/* Subtle CRT scanline effect */
+.starfield::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 255, 0, 0.02) 50%,
+    transparent 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Subtle CRT glow */
+.starfield::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
 }
 
 .star {
   position: absolute;
-  width: 2px;
-  height: 2px;
-
+  width: 1.5px;
+  height: 1.5px;
   background: #00FF00;
   border-radius: 50%;
-  animation: twinkle 2s infinite;
+  animation: twinkle 3s infinite;
   z-index: 100;
-
+  opacity: 0.6;
 }
 
-/* Twinkle Animation */
+/* Calmer twinkle animation */
 @keyframes twinkle {
-  0%, 100% { opacity: 0.8; }
+  0%, 100% { opacity: 0.6; }
   50% { opacity: 0.2; }
 }
 </style>
